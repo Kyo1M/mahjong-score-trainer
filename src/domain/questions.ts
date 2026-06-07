@@ -119,8 +119,8 @@ export const practiceQuestions: PracticeQuestion[] = [
       doraIndicators: ['3p'],
       ruleNotes: ['Mリーグ準拠', '0本場・供託なし'],
     },
-    hand: ['2m', '3m', '4m', '3p', '4p', '5p', '4s', '5s', '6s', '6p', '7p', '8p', '2z'],
-    winningTile: '2z',
+    hand: ['2m', '3m', '4m', '3p', '4p', '5p', '4s', '5s', '6s', '7p', '8p', '2z', '2z'],
+    winningTile: '9p',
     melds: [],
     options: {
       yaku: yaku(['riichi', 'menzen-tsumo', 'pinfu', 'tanyao', 'iipeiko', 'yakuhai-haku']),
