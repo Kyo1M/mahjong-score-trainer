@@ -201,11 +201,12 @@ function chiitoitsu(rng: Rng): Built {
   }
   // Claim one of a pair as the winning tile (tanki wait on that pair).
   const winTile = pairsTiles[0]
+  const tsumo = rng.bool(0.5)
   return asInput(pairsTiles, winTile, {
     melds: [],
     context: ctx(rng, {
-      method: rng.bool(0.5) ? 'tsumo' : 'ron',
-      conditions: ['門前', 'ロン和了'],
+      method: tsumo ? 'tsumo' : 'ron',
+      conditions: ['門前', tsumo ? 'ツモ和了' : 'ロン和了'],
       doraIndicators: [safeDoraIndicator(rng, pairsTiles)],
     }),
   })
@@ -313,11 +314,12 @@ function ittsuMenzen(rng: Rng): Built {
   ]
   // Win on the 7-8-9 run edge — claim 7 (8-9 wait 7) is penchan; use the 2-3-4
   // run of `other` for a ryanmen edge: claim 4 (2-3 waiting 1/4).
+  const tsumo = rng.bool(0.5)
   return asInput(hand14, `4${other}` as TileCode, {
     melds: [],
     context: ctx(rng, {
-      method: rng.bool(0.5) ? 'tsumo' : 'ron',
-      conditions: ['門前', 'ロン和了'],
+      method: tsumo ? 'tsumo' : 'ron',
+      conditions: ['門前', tsumo ? 'ツモ和了' : 'ロン和了'],
       doraIndicators: [safeDoraIndicator(rng, hand14)],
     }),
   })
@@ -337,11 +339,12 @@ function chinitsuMenzen(rng: Rng): Built {
   // Win on a ryanmen edge of the 4-5-6 run: claim 6 (4-5 waiting 3/6).
   const win = `6${s}` as TileCode
   // ensure that tile actually exists in the array (it does: run(s,4) gives 4,5,6)
+  const tsumo = rng.bool(0.5)
   return asInput(hand14, win, {
     melds: [],
     context: ctx(rng, {
-      method: rng.bool(0.5) ? 'tsumo' : 'ron',
-      conditions: ['門前', 'ロン和了'],
+      method: tsumo ? 'tsumo' : 'ron',
+      conditions: ['門前', tsumo ? 'ツモ和了' : 'ロン和了'],
       doraIndicators: [safeDoraIndicator(rng, hand14)],
     }),
   })

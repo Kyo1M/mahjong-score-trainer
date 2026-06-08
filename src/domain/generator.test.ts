@@ -43,6 +43,14 @@ describe('generate (property tests)', () => {
       // re-scoring the same input is deterministic
       const again = scoreHand(input)
       expect(again.defen, `iter ${i}`).toBe(result.defen)
+
+      // context.conditions must not contradict context.method (no ツモ手 showing ロン和了, etc.)
+      const conds = input.context.conditions
+      if (input.context.method === 'tsumo') {
+        expect(conds, `iter ${i}`).not.toContain('ロン和了')
+      } else {
+        expect(conds, `iter ${i}`).not.toContain('ツモ和了')
+      }
     }
   })
 
