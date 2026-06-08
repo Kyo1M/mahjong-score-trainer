@@ -274,3 +274,11 @@ TDD を基本とし、以下を必須ゲートにする。
 - 採用: [@kobalab/majiang-core](https://github.com/kobalab/majiang-core)（MIT, v1.4.1, 純JS, `Util.hule`/`Util.xiangting`/`rule`）
 - 不採用: [MahjongPantheon/riichi-ts](https://github.com/MahjongPantheon/riichi-ts)（2025/5 アーカイブ・非推奨・GPL-3.0・誤りを含むと明記）、[takumif/keisan-mahjong](https://github.com/takumif/keisan-mahjong)（未文書化・テスト未整備）
 - 代替候補（不採用）: Rust/WASM 系 [rysb-dev/agari](https://github.com/rysb-dev/agari)、[harphield/riichi-tools-rs](https://github.com/harphield/riichi-tools-rs)（ブラウザ利用に WASM ビルドが必要で、純JSの majiang-core で十分なため見送り）
+
+## 16. 既存問題の是正記録
+
+ゴールデン検算で検出した、旧固定問題（Mリーグ準拠を称するが誤りを含む）の是正。エンジン（@kobalab/majiang-core, Mリーグ設定）の出力が正。
+
+- **Q1 q-pinfu-ron-30-4-child**: 旧 7700点・符必須 → 正 8000点・満貫（符不要）。理由: 切り上げ満貫により 30符4翻は満貫。
+- **Q3 q-chiitoi-ron-25-4-child**: 旧 4翻6400点 → 正 5翻8000点（満貫）。理由: ドラ表示2索→ドラ3索、手に3索が2枚でドラ2。立直1+七対子2+ドラ2=5翻。
+- **Q7 q-honitsu-open-40-3-child**: 旧 3翻3900点（混一色2+發1）→ 正 4翻8000点（満貫）。理由: 旧データは一気通貫を見落としていた。手牌の筒子は 123p（門前）・456p（チー副露）・789p で 1〜9 を構成し一気通貫（喰い下がり1翻）が成立。發1+一気通貫1+混一色2=4翻、30符4翻は切り上げ満貫で 8000点。
