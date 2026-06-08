@@ -136,6 +136,7 @@ describe('calculateStats', () => {
     const completed = [
       {
         questionId: regular.id,
+        fuRequired: true,
         evaluation: evaluateAnswer(regular, {
           yakuKeys: regular.canonicalInterpretation.yakuKeys,
           hanKey: regular.canonicalInterpretation.hanKey,
@@ -147,6 +148,7 @@ describe('calculateStats', () => {
       },
       {
         questionId: limit.id,
+        fuRequired: false,
         evaluation: evaluateAnswer(limit, {
           yakuKeys: limit.canonicalInterpretation.yakuKeys,
           hanKey: '4',
@@ -158,7 +160,7 @@ describe('calculateStats', () => {
       },
     ]
 
-    const stats = calculateStats(completed, practiceQuestions)
+    const stats = calculateStats(completed)
 
     expect(stats.total).toBe(2)
     expect(stats.completeCorrect).toBe(1)
