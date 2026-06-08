@@ -133,3 +133,28 @@ describe('tile mapping', () => {
     expect(buildBingpai(['3m', '1m', '2p', '1z', '2m'])).toBe('m123p2z1')
   })
 })
+
+import { scoreHand } from './majiang-adapter'
+import type { ScoreInput } from './types'
+
+describe('scoreHand (menzen)', () => {
+  it('scores a dealer pinfu tsumo as 20fu / 3han', () => {
+    const input: ScoreInput = {
+      hand: ['2m','3m','4m','3p','4p','5p','4s','5s','6s','7p','8p','2z','2z'],
+      winningTile: '9p',
+      melds: [],
+      context: {
+        seatWind: '東', roundWind: '東', dealer: true, method: 'tsumo',
+        conditions: ['門前','ツモ和了'], doraIndicators: ['3p'], ruleNotes: [],
+      },
+    }
+    const r = scoreHand(input)
+    expect(r.valid).toBe(true)
+    expect(r.fu).toBe(20)
+    expect(r.han).toBe(3) // 門前ツモ + 平和 + ドラ1
+    expect(r.isLimit).toBe(false)
+    expect(r.yaku.filter((y) => !y.isDora).map((y) => y.name)).toEqual(
+      expect.arrayContaining(['門前清自摸和', '平和']),
+    )
+  })
+})
