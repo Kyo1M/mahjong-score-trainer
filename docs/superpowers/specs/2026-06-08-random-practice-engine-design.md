@@ -1,0 +1,238 @@
+# ランダム無限練習エンジン 設計書
+
+- 日付: 2026-06-08
+- ブランチ: `feat/random-practice-engine`
+- ステータス: 設計確定（実装計画へ）
+
+## 1. 背景と目的
+
+現状の Mahjong Score Trainer は、`src/domain/questions.ts` に**手作業で検証した固定問題が8問**だけあり、`nextQuestionIndex` が `(current+1) % 8` で同じ8問を同じ順に繰り返すだけになっている。
+
+目的は、**役・翻・符・支払いをランダムに出題し続けられる「無限練習」**にすること。ただし本アプリは点数計算トレーナーであり、**表示する答えが正しいこと**が価値の中心。任意の手牌から点数を自前算出するロジックはバグると誤答を教えてしまうため、**点数計算は枯れた OSS に委譲**する。
+
+## 2. 中心原則
+
+**正解はジェネレータの「意図」ではなく、採点器の「解析結果」だけが決める。**
+
+ジェネレータは合法な和了形を構成して提案するだけ。最終的な14牌＋状況を、外部ライブラリ `@kobalab/majiang-core` の採点関数に通し、その出力だけを正解とする。これにより、ジェネレータが意図せず三色や一盃口を含む手を作っても、採点器が一から全役を検出・計算するので**答えは常に正しい**。生成のバグが誤答に直結しない。
+
+```
+generator → (14牌 + 状況) → majiang-adapter(hule) → ScoreResult
+                                                        ↓
+                                          question-factory → PracticeQuestion
+```
+
+## 3. スコープ
+
+### 対象（実戦コア一式）
+- 手の形: 標準形（4面子1雀頭）＋ 七対子
+- 門前 / 副露（チー・ポン・明槓）
+- 主要役: 立直・ダブル立直・一発・門前清自摸和・平和・断幺九・一盃口・二盃口・三色同順・一気通貫・全帯幺九・純全帯幺九・混一色・清一色・対々和・三暗刻・役牌（白/發/中＋場風＋自風）・混老頭・七対子
+- 喰い下がり（三色・一気・全帯・純全・混一・清一）
+- ドラ ＋ 赤ドラ（赤五 m/p/s 各1枚）
+- 満貫〜三倍満 ＋ **切り上げ満貫**（30符4翻・60符3翻）
+
+### 対象外（YAGNI）
+- **役満の生成**（国士・四暗刻・大三元・字一色 等は生成しない）
+- 数え役満（Mリーグ準拠で不採用＝上限は三倍満）
+- 流し満貫・人和・地和・天和などのレア状況役
+- 裏ドラ・槓ドラ（出題の手は表ドラ＋赤のみ。隠し情報で驚かせない）
+- 本場・供託・責任払い（責任払い）
+- ログイン・長期成績・SNS共有・PWAオフライン
+
+役満の露出は既存の固定問題「国士無双」をガイド/参考として温存することで確保する（生成対象には含めない）。
+
+## 4. ルール設定（Mリーグ準拠）
+
+`@kobalab/majiang-core` の `Majiang.rule()` 既定値を、以下で上書きして採点器に渡す（キーはライブラリのソース `lib/rule.js` で確認済み）。
+
+| ルールキー | 既定 | 本アプリ設定 | 根拠 |
+|---|---|---|---|
+| `'赤牌'` | `{m:1,p:1,s:1}` | `{m:1,p:1,s:1}` | 赤ドラあり |
+| `'クイタンあり'` | `true` | `true` | 喰い断あり |
+| `'切り上げ満貫あり'` | `false` | **`true`** | Mリーグ準拠 |
+| `'数え役満あり'` | `true` | **`false`** | Mリーグ準拠（上限三倍満） |
+| `'連風牌は2符'` | `false` | **`true`** | 連風牌の雀頭2符（DESIGN.md） |
+
+その他のルールキー（場棒・供託・ダブル役満など）は出題で使わないため既定のまま。本アプリは 0本場・供託なし・裏ドラなしで固定。
+
+## 5. モジュール設計
+
+すべて `src/domain/` 配下。各ファイルは単一責務・単独テスト可能とする。
+
+```
+majiang-adapter.ts   TileCode ⇄ majiang表記 の変換。Mリーグ rule で hule() を呼び、ScoreResult に正規化
+generator.ts         アーキタイプによる合法和了形の構成生成（seed可能RNG）。アダプタで検算し棄却サンプリング
+difficulty.ts        ScoreResult → 難易度（初級/標準/応用/満貫以上）の決定的分類
+distractors.ts       翻・支払いの「もっともらしい誤答」生成
+question-factory.ts  ScoreResult ＋ 生成手 → PracticeQuestion（選択肢・解説・内訳・guideAnchors・難易度）
+questions.ts         既存8問を「ゴールデン検証」用に温存（出題には使わない）
+scoring.ts           既存 evaluateAnswer / calculateStats（軽微改修）
+types.ts             既存＋小追加（ScoreResult, GeneratedHand, DifficultyFilter, CompletedQuestion拡張）
+tiles.ts             既存（牌画像・ラベル）変更なし
+```
+
+廃止予定だった自前の `hand-parser.ts / yaku.ts / fu.ts / score.ts / scorer.ts` は **作らない**（majiang-core が担う）。
+
+## 6. majiang-core アダプタ（`majiang-adapter.ts`）
+
+### 6.1 依存追加
+- `package.json` の dependencies に `@kobalab/majiang-core`（v1.4.1, MIT, 実行時依存ゼロ, 純JS）を追加。
+- 型定義が無い（JS ライブラリ）ため、使用する範囲だけの薄いアンビエント宣言 `src/types/majiang-core.d.ts` を自作（`Shoupai.fromString`, `Util.hule`, `Util.xiangting`, `rule`）。
+
+### 6.2 牌コードのマッピング
+本アプリの `TileCode` と majiang 表記はほぼ同型（並びが `数字+スート` ⇄ `スート+数字`、赤は `0`）。
+
+| TileCode | majiang | 備考 |
+|---|---|---|
+| `'1m'`…`'9m'` | `m1`…`m9` | |
+| `'0m'` | `m0` | 赤五萬 |
+| `'1p'`…`'9p'`,`'0p'` | `p1`…`p9`,`p0` | |
+| `'1s'`…`'9s'`,`'0s'` | `s1`…`s9`,`s0` | |
+| `'1z'`…`'7z'` | `z1`…`z7` | 1=東,2=南,3=西,4=北,5=白,6=發,7=中（採番一致） |
+
+双方向の純関数 `toMajiang(tile)` / `fromMajiang(pai)` を提供し、全コード往復をユニットテストで網羅する。
+
+### 6.3 採点呼び出し
+入力（本アプリの内部表現）:
+- 門前手牌（concealed）、副露（melds: kind/tiles/open/誰から）、和了牌、和了法（ron/tsumo）、親(dealer)、場風・自風、立直/一発フラグ、ドラ表示牌、赤の有無。
+
+処理:
+- `Shoupai` を組み立て、`Util.hule(shoupai, rongpai, param)` を呼ぶ。
+  - `param.rule` = §4 の Mリーグ rule
+  - `param.zhuangfeng` = 場風(0-3)、`param.menfeng` = 自風(0-3)
+  - `param.hupai` = { lizhi: 0/1/2, yifa }（haitei/houtei/嶺上/槍槓/天和は使わない）
+  - `param.baopai` = ドラ表示牌配列、`param.fubaopai` = null（裏ドラなし）
+  - `param.jicun` = { changbang:0, lizhibang:0 }
+- ron は門前13牌＋副露＋ `rongpai`（方向付き）、tsumo は14牌で `rongpai=null`。**正確な majiang 呼出規約はゴールデン/ユニットテストで担保**（既存8問の再現で検証）。
+
+### 6.4 ScoreResult（正規化出力）
+```ts
+type ScoreYaku = { name: string; han: number; yakuman?: boolean }
+type ScoreResult = {
+  valid: boolean            // 和了かつ1役以上
+  yaku: ScoreYaku[]         // hule.hupai を正規化（name は日本語役名）
+  han: number               // hule.fanshu（合計翻）
+  fu: number | null         // hule.fu（満貫以上は null）
+  yakumanMultiplier: number // hule.damanguan
+  defen: number             // hule.defen
+  fenpei: number[]          // hule.fenpei（4人への点移動）
+  isLimit: boolean          // 満貫以上か（fuRequired=false の根拠）
+  dealer: boolean
+  method: 'ron' | 'tsumo'
+}
+```
+`hule` が無役/不和了を返す場合は `valid=false`（ジェネレータが棄却）。`hupai.fanshu` の `'*'`/`'**'`（数え役満/役満表記）は本アプリでは発生しない設定だが、来た場合は安全側に `valid=false` 扱い（生成手に役満が紛れたら棄却）。
+
+## 7. ジェネレータ（`generator.ts`）
+
+### 7.1 方針
+一様乱択は無役・退屈手ばかりになるため、**アーキタイプ（型）で構成生成**する。型は「必ず1役以上」「難易度の傾向」を持つ骨格。
+
+アーキタイプ例:
+- 断幺九ロン（子/親）、平和ツモ、立直＋α（門前ランダム）、役牌ポン、混一色（門前/副露）、清一色、対々和、三暗刻、七対子、三色同順、一気通貫、全帯/純全帯。
+
+### 7.2 構成生成
+各型ごとに:
+1. 使う色・数・風・親子・ロンツモ・立直/一発・待ち種別・ドラ表示牌・赤の有無をRNGで決める。
+2. 4面子1雀頭（または七対子）を**牌が各4枚以下**になるよう構成し、和了牌を1枚指定（門前/副露の別を割当）。
+3. アダプタで採点（`Util.hule`）。
+4. 採用条件: `ScoreResult.valid === true`（和了かつ1役以上、役満でない）かつ §8 の難易度分類が要求難易度に一致。
+5. 不一致は棄却して再生成（型あたり最大50回試行、超過時は別の型へフォールバック。全体上限200回に達したら難易度不問の有効手を返し、無限ループを防ぐ）。
+
+### 7.3 乱数
+- seed 可能な小型 PRNG（mulberry32 等）を実装し、`generate(options, rng)` に注入。
+- アプリ実行時は時刻/`crypto.getRandomValues` で seed。テストは固定 seed で決定的に再現。
+- 生成手は seed から完全再現できるよう、生成に使った seed を `PracticeQuestion.id` または併設フィールドに含める（デバッグ・不具合再現用）。
+
+## 8. 難易度分類（`difficulty.ts`）
+
+`ScoreResult` の特徴から決定的に分類（生成意図ではなく結果で判定）:
+
+- **満貫以上**: `isLimit === true`（5翻以上、または切り上げ満貫該当）。
+- **初級**: 門前、`han` が 1〜2、役が基本役のみ（立直/一発/門前ツモ/平和/断幺九/役牌/一盃口 の部分集合）、`fu ∈ {20,30,40}`。
+- **応用**: 副露ありの喰い下がり役（混一/清一/三色/一気/全帯/純全）を含む、または 三暗刻/対々和 を含む、または 複数解釈（同点別解）が存在、または `fu >= 50`。
+- **標準**: 上記以外（満貫未満で初級にも応用にも該当しない）。
+
+判定順: 満貫以上 → 応用 → 初級 → 標準。`DifficultyFilter = '初級'|'標準'|'応用'|'満貫以上'|'ミックス'`。`ミックス`は全難易度を許容。
+
+## 9. 出題ファクトリ（`question-factory.ts`）
+
+`ScoreResult` ＋ 生成手 → 既存 `PracticeQuestion` 型を生成。
+
+- **hand / winningTile / melds / context**: 生成手から構築（context は親子・場風・自風・ロンツモ・立直・条件・ドラ表示牌・ruleNotes）。
+- **options.yaku**: 正解役すべて ＋ もっともらしい不成立役を「混同しやすい役マップ」（例: 平和↔断幺九↔一盃口↔三色、混一↔清一、対々↔三暗刻）から補充。計6〜8個・シャッフル・**正解を必ず含む**。ドラは選択肢に入れない（既存仕様）。
+- **options.han**: 正解翻 ＋ 近傍3つ（±1/±2、ドラ見落とし・喰い下がり見落とし等のもっともらしい誤り）。計4個・正解必須。
+- **options.fu**: 既存の固定メニュー（20〜70＋「符は不要」）を流用。`fuRequired` で絞り込み（既存 UI 仕様どおり）。
+- **options.payment**: 正解 ＋ 得点表の隣接セル（±1翻/±10符/親子取り違え）から誤答3つを `distractors.ts` で生成。ラベルは既存書式（`'3900点'` / `'1300点オール'` / `'2000 / 4000点'`）に合わせて `fenpei`/`defen` から整形。
+- **acceptedInterpretations / canonicalInterpretation**: canonical は採点器の解。同点の別役解釈が存在する場合は accepted に追加し、誤判定を防ぐ。
+- **fuRequired**: `!ScoreResult.isLimit`（満貫以上は符不要）。
+- **yaku / fu（解説用 BreakdownItem[]）**:
+  - `yaku`: `hupai` を役ごと `{label, value:'N翻'}` に。ドラ/赤は `{label:'ドラ', value:'N翻', note:'表示牌Xなので…'}` を別途付加。
+  - `fu`: **合計符の表示**（`'30符'` 等）＋ 特徴ベースの注記（「七対子は25符固定」「平和ツモは20符」「喰い下がり混一は2翻」等）。
+  - 注: 副底/門前ロン/各面子…の**逐次符内訳テーブルは v1 では作らない**（自前の符積算ロジックを避ける）。将来、majiang の合計符と突き合わせて検証付きで表示する拡張余地として残す。
+- **explanation**: 翻内訳・符の要点・点の導出・ドラ注記をテンプレで文章化。
+- **difficulty / title / prompt / guideAnchors**: difficulty は §8。title は役の要約から自動生成。guideAnchors は検出役/符の特徴から付与。
+
+## 10. UI／セッション統合（`App.tsx` ほか）
+
+- 練習を「固定 index」から**無限ストリーム**へ:
+  - `App` が `difficulty: DifficultyFilter` と現在の生成問題を保持。
+  - 「次の問題へ」で nonce を更新し新規生成。`PracticePage` への props 形（`question` 等）は現状維持。
+- **難易度フィルタのチップ**（初級/標準/応用/満貫以上/ミックス）を練習画面に追加。変更で再生成。既定は「ミックス」。
+- **永続化（sessionStorage）**:
+  - 保存対象を `{ completed: CompletedQuestion[], difficulty }` に変更。現在問題はリロード時に再生成（無限トレーナーとして自然）。
+  - ストレージキーを `mahjong-score-trainer-session-v3` に更新（形変更のため）。
+  - 「進行中のセッション」表示は `completed.length` で従来どおり機能。
+- **Home 文言更新**: 「固定問題で…全役ランダム生成は後で」を「無制限ランダム出題」に合わせて改訂。
+
+## 11. 既存コードへの変更点
+
+- **`types.ts`**: `CompletedQuestion` に `fuRequired: boolean`（採点時に確定）を追加。`ScoreResult`/`GeneratedHand`/`DifficultyFilter` を追加。
+- **`scoring.ts`**:
+  - `calculateStats(completed)` を、グローバル問題配列に依存しない形へ改修（`fuRequired` は各 `CompletedQuestion` から読む）。シグネチャから `questions` 引数を除去。
+  - `evaluateAnswer` は変更なし（`PracticeQuestion` を受けるまま）。
+- **`scoring.test.ts`**: `calculateStats` の新シグネチャに追随。既存の評価系テストは温存。
+- **`questions.ts`**: 8問は温存（出題には未使用、ゴールデン検証専用）。`nextQuestionIndex` は不要になるため削除し、参照を除去。
+
+## 12. テスト＆検証戦略
+
+TDD を基本とし、以下を必須ゲートにする。
+
+1. **アダプタ往復テスト**: 全 `TileCode` の `toMajiang`/`fromMajiang` 往復一致。
+2. **ゴールデンテスト（最重要）**: 既存8問の `hand+winningTile+melds+context` をアダプタ経由で `hule` に通し、人手検証済みの **役・翻・符・支払い** が一致することを assert。→ 「牌マッピング正しい」＋「Mリーグ rule 設定正しい」を同時保証。不一致時は実装/設定/旧問題のいずれかの誤りを検出。
+3. **ジェネレータ・プロパティテスト**: 固定 seed 群で多数生成し、各手につき
+   - 牌14枚・各種≤4枚
+   - `ScoreResult.valid`（1役以上・役満なし）
+   - 要求難易度に一致
+   - `canonicalInterpretation` が `options` 内に存在し、`evaluateAnswer` で `completeCorrect`
+   - payment 誤答が正解と重複しない・得点表として妥当
+4. **難易度分類テスト**: 代表 ScoreResult → 期待難易度の表ベース検証。
+5. **独立検証ワークフロー（ultracode）**: 実装・テスト通過後、生成サンプルを別エージェント群が手計算で再導出し採点器出力と突合、さらにアダプタ/ルール設定/誤答生成を監査して不一致を報告する敵対的チェックを実施。
+6. **既存の検証コマンド**: `npm run lint` / `npm run test` / `npm run build` を緑にする。
+
+## 13. リスクと対策
+
+| リスク | 対策 |
+|---|---|
+| 牌マッピング誤り | 往復テスト＋ゴールデンテスト |
+| Mリーグ rule 設定の取り違え | ゴールデンテスト（既知答えと突合） |
+| majiang の呼出規約（ron/tsumo, 副露方向, 和了牌表記）の誤解 | ゴールデン＋ユニットで実挙動に対して固定 |
+| 生成が偏る/退屈 | 多型アーキタイプ＋難易度フィルタ＋seed多様化 |
+| 棄却サンプリングの無限ループ | 型ごと試行上限＋フォールバック |
+| 型定義なし(JS lib) | 使用範囲の薄い `.d.ts` 自作 |
+| 役満/数え役満の混入 | rule で数え役満 off、`'*'`/`'**'` 検出時は `valid=false` で棄却 |
+
+## 14. 受け入れ基準
+
+- 難易度フィルタを選んで「次の問題へ」を押すと、毎回**異なるランダム問題**が無限に出題される。
+- 出題の **役・翻・符・支払いの正解が `@kobalab/majiang-core` の算出と一致**する（ゴールデン＋プロパティテスト緑）。
+- 既存のセッション集計・結果画面・ガイドが従来どおり機能する。
+- `npm run lint` / `npm run test` / `npm run build` がすべて成功する。
+- 独立検証ワークフローで重大な不一致が出ない。
+
+## 15. 参考（OSS 調査）
+
+- 採用: [@kobalab/majiang-core](https://github.com/kobalab/majiang-core)（MIT, v1.4.1, 純JS, `Util.hule`/`Util.xiangting`/`rule`）
+- 不採用: [MahjongPantheon/riichi-ts](https://github.com/MahjongPantheon/riichi-ts)（2025/5 アーカイブ・非推奨・GPL-3.0・誤りを含むと明記）、[takumif/keisan-mahjong](https://github.com/takumif/keisan-mahjong)（未文書化・テスト未整備）
+- 代替候補（不採用）: Rust/WASM 系 [rysb-dev/agari](https://github.com/rysb-dev/agari)、[harphield/riichi-tools-rs](https://github.com/harphield/riichi-tools-rs)（ブラウザ利用に WASM ビルドが必要で、純JSの majiang-core で十分なため見送り）
