@@ -397,7 +397,8 @@ export function scoreHand(input: ScoreInput): ScoreResult {
     rongpai = `${toMajiang(winningTile)}+` // 方向は採点に影響しない
   }
 
-  const r = Util.hule(shoupai, rongpai, {
+  // 重要: flat な param を直接 Util.hule に渡すと throw する。必ず hule_param で正規化する。
+  const param = Util.hule_param({
     rule: MLEAGUE_RULE,
     zhuangfeng: WIND_INDEX[context.roundWind],
     menfeng: WIND_INDEX[context.seatWind],
@@ -405,6 +406,7 @@ export function scoreHand(input: ScoreInput): ScoreResult {
     yifa: context.conditions.includes('一発'),
     baopai: context.doraIndicators.map(toMajiang),
   })
+  const r = Util.hule(shoupai, rongpai, param)
 
   const invalid: ScoreResult = {
     valid: false, yaku: [], han: 0, fu: null,
