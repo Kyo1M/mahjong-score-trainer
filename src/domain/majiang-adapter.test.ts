@@ -104,3 +104,32 @@ describe('majiang-core spike', () => {
     expect(Util.xiangting(shoupai)).toBe(-1)
   })
 })
+
+import { fromMajiang, toMajiang, buildBingpai } from './majiang-adapter'
+import type { TileCode } from './types'
+
+describe('tile mapping', () => {
+  const all: TileCode[] = [
+    '1m','2m','3m','4m','5m','6m','7m','8m','9m','0m',
+    '1p','2p','3p','4p','5p','6p','7p','8p','9p','0p',
+    '1s','2s','3s','4s','5s','6s','7s','8s','9s','0s',
+    '1z','2z','3z','4z','5z','6z','7z',
+  ]
+
+  it('round-trips every tile', () => {
+    for (const tile of all) {
+      expect(fromMajiang(toMajiang(tile)), tile).toBe(tile)
+    }
+  })
+
+  it('maps red fives to 0 and honors honor numbering', () => {
+    expect(toMajiang('0m')).toBe('m0')
+    expect(toMajiang('5p')).toBe('p5')
+    expect(toMajiang('1z')).toBe('z1')
+    expect(toMajiang('7z')).toBe('z7')
+  })
+
+  it('builds a grouped bingpai string sorted by suit', () => {
+    expect(buildBingpai(['3m', '1m', '2p', '1z', '2m'])).toBe('m123p2z1')
+  })
+})
