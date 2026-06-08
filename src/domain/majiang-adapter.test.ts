@@ -158,3 +158,22 @@ describe('scoreHand (menzen)', () => {
     )
   })
 })
+
+describe('scoreHand (open hand)', () => {
+  it('scores an open yakuhai (中) hand', () => {
+    const input: ScoreInput = {
+      hand: ['1m','1m','1m','2p','3p','4p','7s','8s','9s','5s'],
+      winningTile: '5s',
+      melds: [{ kind: 'pon', tiles: ['7z','7z','7z'], open: true, label: '中ポン' }],
+      context: {
+        seatWind: '東', roundWind: '東', dealer: true, method: 'ron',
+        conditions: ['副露あり','ロン和了'], doraIndicators: ['8s'], ruleNotes: [],
+      },
+    }
+    const r = scoreHand(input)
+    expect(r.valid).toBe(true)
+    expect(r.han).toBe(2) // 中1 + ドラ1
+    expect(r.fu).toBe(40)
+    expect(r.yaku.some((y) => !y.isDora && y.name.includes('中'))).toBe(true)
+  })
+})
