@@ -554,11 +554,6 @@ export const practiceQuestions: PracticeQuestion[] = [
   },
 ]
 
-export function nextQuestionIndex(current: number, answeredCount: number): number {
-  void answeredCount
-  return (current + 1) % practiceQuestions.length
-}
-
 export function getQuestionById(id: string): PracticeQuestion | undefined {
   return practiceQuestions.find((question) => question.id === id)
 }

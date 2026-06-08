@@ -3,68 +3,70 @@ import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { DoraView, HandView } from './components/TileView'
 import { calculateStats, evaluateAnswer, formatRate } from './domain/scoring'
-import {
-  nextQuestionIndex,
-  practiceQuestions,
-} from './domain/questions'
+import { generate } from './domain/generator'
+import { buildQuestion } from './domain/question-factory'
+import { createRng } from './domain/rng'
+import { difficultyLabel } from './domain/difficulty-label'
 import type {
-  AnswerChoice,
-  AnswerEvaluation,
-  CompletedQuestion,
-  PracticeQuestion,
-  SessionStats,
-  UserAnswer,
+  AnswerChoice, AnswerEvaluation, CompletedQuestion, DifficultyFilter,
+  PracticeQuestion, SessionStats, UserAnswer,
 } from './domain/types'
 
-const storageKey = 'mahjong-score-trainer-session-v2'
+const storageKey = 'mahjong-score-trainer-session-v3'
 
 type StoredSession = {
-  questionIndex: number
+  difficulty: DifficultyFilter
   completed: CompletedQuestion[]
 }
 
-const emptyAnswer: UserAnswer = {
-  yakuKeys: [],
-  hanKey: null,
-  fuKey: null,
-  paymentKey: null,
-}
+const emptyAnswer: UserAnswer = { yakuKeys: [], hanKey: null, fuKey: null, paymentKey: null }
 
 function loadSession(): StoredSession {
   const raw = window.sessionStorage.getItem(storageKey)
-  if (!raw) {
-    return { questionIndex: 0, completed: [] }
-  }
-
+  if (!raw) return { difficulty: 'mix', completed: [] }
   try {
     const parsed = JSON.parse(raw) as StoredSession
     return {
-      questionIndex: parsed.questionIndex ?? 0,
+      difficulty: parsed.difficulty ?? 'mix',
       completed: Array.isArray(parsed.completed) ? parsed.completed : [],
     }
   } catch {
-    return { questionIndex: 0, completed: [] }
+    return { difficulty: 'mix', completed: [] }
   }
+}
+
+function makeQuestion(difficulty: DifficultyFilter): PracticeQuestion {
+  const seed = (Math.floor(Math.random() * 0xffffffff) >>> 0) || 1
+  const rng = createRng(seed)
+  const { input, result } = generate(difficulty, rng)
+  return buildQuestion({ ...input }, result, rng)
 }
 
 function App() {
   const [session, setSession] = useState<StoredSession>(() => loadSession())
+  const [question, setQuestion] = useState<PracticeQuestion>(() => makeQuestion(loadSession().difficulty))
 
   useEffect(() => {
     window.sessionStorage.setItem(storageKey, JSON.stringify(session))
   }, [session])
 
   function resetSession() {
-    setSession({ questionIndex: 0, completed: [] })
+    setSession((s) => ({ difficulty: s.difficulty, completed: [] }))
+  }
+
+  function setDifficulty(difficulty: DifficultyFilter) {
+    setSession((s) => ({ ...s, difficulty }))
+    setQuestion(makeQuestion(difficulty))
   }
 
   function recordAnswer(evaluation: AnswerEvaluation, elapsedMs: number) {
     setSession((current) => ({
-      questionIndex: current.questionIndex,
+      ...current,
       completed: [
         ...current.completed,
         {
-          questionId: practiceQuestions[current.questionIndex].id,
+          questionId: question.id,
+          fuRequired: question.fuRequired,
           evaluation,
           elapsedMs,
           answeredAt: new Date().toISOString(),
@@ -74,19 +76,10 @@ function App() {
   }
 
   function advanceQuestion() {
-    setSession((current) => ({
-      ...current,
-      questionIndex: nextQuestionIndex(
-        current.questionIndex,
-        current.completed.length,
-      ),
-    }))
+    setQuestion(makeQuestion(session.difficulty))
   }
 
-  const stats = useMemo(
-    () => calculateStats(session.completed, practiceQuestions),
-    [session.completed],
-  )
+  const stats = useMemo(() => calculateStats(session.completed), [session.completed])
 
   return (
     <div className="app-shell">
@@ -114,9 +107,11 @@ function App() {
           path="/practice"
           element={
             <PracticePage
-              key={practiceQuestions[session.questionIndex].id}
-              question={practiceQuestions[session.questionIndex]}
+              key={question.id}
+              question={question}
               completedCount={session.completed.length}
+              difficulty={session.difficulty}
+              onSetDifficulty={setDifficulty}
               onAnswered={recordAnswer}
               onNext={advanceQuestion}
             />
@@ -141,10 +136,10 @@ function Home({ completed, onReset }: HomeProps) {
   return (
     <main className="home">
       <section className="hero-card">
-        <p className="eyebrow">MVP: vetted practice set</p>
+        <p className="eyebrow">無制限ランダム出題</p>
         <h1>牌姿を見て、役・翻・符・支払いまで一気に鍛える。</h1>
         <p className="lead">
-          いまは固定問題で正しさを優先した総合練習版です。全役ランダム生成は、採点エンジンの検証が十分に揃ってから拡張します。
+          難易度を選んで、ランダムに生成される問題をずっと練習できます。点数計算は検証済みエンジンが採点します。
         </p>
         <div className="hero-actions">
           <Link className="button button--primary" to="/practice">
@@ -197,6 +192,8 @@ function Home({ completed, onReset }: HomeProps) {
 type PracticePageProps = {
   question: PracticeQuestion
   completedCount: number
+  difficulty: DifficultyFilter
+  onSetDifficulty: (d: DifficultyFilter) => void
   onAnswered: (evaluation: AnswerEvaluation, elapsedMs: number) => void
   onNext: () => void
 }
@@ -204,6 +201,8 @@ type PracticePageProps = {
 function PracticePage({
   question,
   completedCount,
+  difficulty,
+  onSetDifficulty,
   onAnswered,
   onNext,
 }: PracticePageProps) {
@@ -250,6 +249,7 @@ function PracticePage({
   return (
     <main className="practice-page">
       <section className="practice-card">
+        <DifficultyFilterBar value={difficulty} onChange={onSetDifficulty} />
         <div className="practice-card__topline">
           <div>
             <p className="eyebrow">Question {questionNumber}</p>
@@ -348,6 +348,28 @@ function PracticePage({
         )}
       </section>
     </main>
+  )
+}
+
+const DIFFICULTY_FILTERS: DifficultyFilter[] = ['mix', 'starter', 'standard', 'advanced', 'limit']
+
+function DifficultyFilterBar({
+  value, onChange,
+}: { value: DifficultyFilter; onChange: (d: DifficultyFilter) => void }) {
+  return (
+    <div className="difficulty-bar" role="group" aria-label="難易度フィルタ">
+      {DIFFICULTY_FILTERS.map((d) => (
+        <button
+          key={d}
+          type="button"
+          className={`difficulty-chip ${value === d ? 'is-active' : ''}`}
+          aria-pressed={value === d}
+          onClick={() => onChange(d)}
+        >
+          {difficultyLabel(d)}
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -732,17 +754,6 @@ function InfoCard({ title, id, children }: InfoCardProps) {
       <p>{children}</p>
     </section>
   )
-}
-
-function difficultyLabel(difficulty: PracticeQuestion['difficulty']): string {
-  const labels: Record<PracticeQuestion['difficulty'], string> = {
-    starter: '初級',
-    standard: '標準',
-    advanced: '応用',
-    limit: '満貫以上',
-  }
-
-  return labels[difficulty]
 }
 
 function guideLabel(anchor: string): string {

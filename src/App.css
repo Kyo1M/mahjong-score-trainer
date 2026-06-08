@@ -708,3 +708,24 @@ h3 {
     flex: 1 1 100%;
   }
 }
+
+.difficulty-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.difficulty-chip {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--tile-edge, #cdb88e);
+  background: var(--surface, #fffaf0);
+  color: var(--text, #1f2d24);
+  font-weight: 600;
+}
+.difficulty-chip.is-active {
+  background: var(--brass, #a86e1d);
+  color: #fffaf0;
+  border-color: var(--brass, #a86e1d);
+}
