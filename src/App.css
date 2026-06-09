@@ -216,6 +216,19 @@ h3 {
   color: var(--text);
 }
 
+.button--large {
+  font-size: 1.15rem;
+  min-height: 64px;
+  padding: 0 48px;
+  width: min(100%, 420px);
+}
+
+.home-cta-bottom {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(28px, 5vw, 48px);
+}
+
 .feature-grid {
   display: grid;
   gap: 16px;

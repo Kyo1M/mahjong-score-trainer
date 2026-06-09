@@ -185,6 +185,12 @@ function Home({ completed, onReset }: HomeProps) {
           </div>
         </section>
       )}
+
+      <section className="home-cta-bottom">
+        <Link className="button button--primary button--large" to="/practice">
+          練習を始める
+        </Link>
+      </section>
     </main>
   )
 }
@@ -211,6 +217,11 @@ function PracticePage({
   const [evaluation, setEvaluation] = useState<AnswerEvaluation | null>(null)
   const [startedAt] = useState(() => performance.now())
   const [questionNumber] = useState(() => completedCount + 1)
+
+  // 問題ごとに再マウントされるので、新しい問題は画面の一番上から始める。
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const canSubmit =
     answer.yakuKeys.length > 0 &&
@@ -638,7 +649,7 @@ function GuidePage() {
         <p className="eyebrow">Guide</p>
         <h1>点数計算のしくみ</h1>
         <p className="lead">
-          このアプリでは、場ゾロを除いた一般的な翻数で表記します。ルールは「切り上げ満貫なし・数え役満なし・連風牌の雀頭は2符」で統一しています。
+          このアプリでは、場ゾロを除いた一般的な翻数で表記します。ルールは「切り上げ満貫なし・数え役満あり・連風牌の雀頭は2符」で統一しています。
         </p>
       </section>
 
@@ -720,12 +731,17 @@ function GuidePage() {
 
       <article className="guide-section" id="limit">
         <h2>満貫以上</h2>
+        <p>翻数が増えると、点数は段階的に上がります（子の点数 / 親の点数）。</p>
         <ul>
-          <li>5翻以上は満貫です（切り上げ満貫は採用していません）。</li>
-          <li>6〜7翻は跳満、8〜10翻は倍満、11翻以上は三倍満になります。</li>
-          <li>数え役満は採用しないので、役満以外は三倍満が上限です。</li>
-          <li id="yakuman">役満は複合しますが、個別のダブル役満は扱いません。</li>
+          <li>満貫：5翻（4翻でも符が高いと満貫）。8000点 / 12000点。</li>
+          <li>跳満（ハネマン）：6〜7翻。12000点 / 18000点。</li>
+          <li>倍満（バイマン）：8〜10翻。16000点 / 24000点。</li>
+          <li>三倍満（サンバイマン）：11〜12翻。24000点 / 36000点。</li>
+          <li>数え役満：13翻以上。32000点 / 48000点。</li>
         </ul>
+        <p id="yakuman">
+          四暗刻や国士無双などの役満は、複合すると倍々で加算されます。ただし、このアプリでは個別のダブル役満（国士無双十三面待ちなど）は扱いません。
+        </p>
       </article>
 
       <article className="guide-section" id="payment">

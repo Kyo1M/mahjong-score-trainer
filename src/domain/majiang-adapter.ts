@@ -4,10 +4,10 @@ import type { Meld, ScoreInput, ScoreResult, ScoreYaku, TileCode, Wind } from '.
 const { Shoupai, Util, rule } = Majiang
 
 // 標準ルール: 切り上げ満貫なし（30符4翻・60符3翻は満貫未満の 7700/11600 点）。
-// 数え役満なし・連風牌の雀頭は 2 符はそのまま採用する。
+// 13 翻以上は数え役満、連風牌の雀頭は 2 符。
 const STANDARD_RULE = rule({
   切り上げ満貫あり: false,
-  数え役満あり: false,
+  数え役満あり: true,
   連風牌は2符: true,
 })
 
