@@ -277,6 +277,7 @@ function PracticePage({
           tiles={question.hand}
           winningTile={question.winningTile}
           melds={question.melds}
+          riichi={question.context.riichi}
         />
 
         <div className="yaku-answer-block">
@@ -363,7 +364,7 @@ function PracticePage({
         </div>
 
         {evaluation && (
-          <FeedbackPanel question={question} evaluation={evaluation} />
+          <FeedbackPanel question={question} evaluation={evaluation} onNext={onNext} />
         )}
       </section>
     </main>
@@ -404,7 +405,6 @@ function ContextPanel({ question }: ContextPanelProps) {
       <span>{context.method === 'ron' ? 'ロン' : 'ツモ'}</span>
       <span>場風 {context.roundWind}</span>
       <span>自風 {context.seatWind}</span>
-      {context.riichi && <span>{context.riichi}（立直棒を場に出す）</span>}
       {context.conditions.map((condition) => (
         <span key={condition}>{condition}</span>
       ))}
@@ -495,9 +495,10 @@ function MultiAnswerGroup({
 type FeedbackPanelProps = {
   question: PracticeQuestion
   evaluation: AnswerEvaluation
+  onNext: () => void
 }
 
-function FeedbackPanel({ question, evaluation }: FeedbackPanelProps) {
+function FeedbackPanel({ question, evaluation, onNext }: FeedbackPanelProps) {
   const canonical = question.canonicalInterpretation
 
   return (
@@ -534,6 +535,11 @@ function FeedbackPanel({ question, evaluation }: FeedbackPanelProps) {
             くわしくはガイド: {guideLabel(anchor)}
           </Link>
         ))}
+      </div>
+      <div className="feedback-panel__actions">
+        <button className="button button--primary" type="button" onClick={onNext}>
+          次の問題へ
+        </button>
       </div>
     </section>
   )

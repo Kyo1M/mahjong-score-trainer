@@ -23,15 +23,38 @@ export function TileView({ tile, winning = false, compact = false }: TileViewPro
   )
 }
 
+type RiichiStickProps = {
+  label?: string | null
+}
+
+// 場に出した立直棒（1000点棒）。クリーム色の棒に中央の赤点。
+export function RiichiStick({ label }: RiichiStickProps) {
+  return (
+    <span className="riichi-stick" role="img" aria-label={`${label ?? '立直'}（立直棒を場に出す）`}>
+      <svg className="riichi-stick__bar" viewBox="0 0 96 18" aria-hidden="true">
+        <rect x="1" y="4" width="94" height="10" rx="5" fill="#fbf7ee" stroke="#cdbfa6" />
+        <circle cx="48" cy="9" r="3" fill="#cf3a3a" />
+      </svg>
+      <span className="riichi-stick__label">{label ?? '立直'}</span>
+    </span>
+  )
+}
+
 type HandViewProps = {
   tiles: TileCode[]
   winningTile: TileCode
   melds: Meld[]
+  riichi?: string | null
 }
 
-export function HandView({ tiles, winningTile, melds }: HandViewProps) {
+export function HandView({ tiles, winningTile, melds, riichi }: HandViewProps) {
   return (
     <div className="hand-view" aria-label="和了牌姿">
+      {riichi && (
+        <div className="hand-view__riichi">
+          <RiichiStick label={riichi} />
+        </div>
+      )}
       <div className="tile-row tile-row--hand">
         {tiles.map((tile, index) => (
           <TileView key={`${tile}-${index}`} tile={tile} />

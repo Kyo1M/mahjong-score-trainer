@@ -336,6 +336,35 @@ h3 {
   gap: 3px;
 }
 
+.hand-view__riichi {
+  display: flex;
+  margin-bottom: 14px;
+}
+
+.riichi-stick {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.riichi-stick__bar {
+  height: auto;
+  width: 88px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+}
+
+.riichi-stick__label {
+  color: rgba(255, 252, 244, 0.94);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.feedback-panel__actions {
+  display: flex;
+  margin-top: 24px;
+}
+
 .hand-view {
   background:
     radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.14), transparent 30rem),
