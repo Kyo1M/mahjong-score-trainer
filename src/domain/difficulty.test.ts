@@ -12,7 +12,7 @@ const baseInput: ScoreInput = {
 
 function result(partial: Partial<ScoreResult>): ScoreResult {
   return {
-    valid: true, yaku: [], han: 2, fu: 30, defen: 2000, fenpei: [],
+    valid: true, yaku: [], han: 2, fu: 30, fuDetail: null, defen: 2000, fenpei: [],
     isLimit: false, dealer: false, method: 'ron', ...partial,
   }
 }

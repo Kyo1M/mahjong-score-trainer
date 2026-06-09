@@ -4,7 +4,7 @@ import { createRng } from './rng'
 import type { ScoreResult } from './types'
 
 const base: ScoreResult = {
-  valid: true, yaku: [], han: 3, fu: 30, defen: 3900,
+  valid: true, yaku: [], han: 3, fu: 30, fuDetail: null, defen: 3900,
   fenpei: [-3900, 3900, 0, 0], isLimit: false, dealer: false, method: 'ron',
 }
 

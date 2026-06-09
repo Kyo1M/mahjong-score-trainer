@@ -138,6 +138,7 @@ export type ScoreResult = {
   yaku: ScoreYaku[]
   han: number
   fu: number | null         // 満貫以上で点数計算に不要な場合 null
+  fuDetail: BreakdownItem[] | null  // 符の内訳（副底・各面子・待ち・合計・切り上げ）
   defen: number
   fenpei: number[]
   isLimit: boolean          // 満貫以上（fuRequired=false の根拠）

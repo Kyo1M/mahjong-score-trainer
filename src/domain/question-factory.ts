@@ -105,7 +105,7 @@ export function buildQuestion(
     value: `${y.han}翻`,
   }))
   const fuBreakdown: BreakdownItem[] = fuRequired
-    ? [{ label: '合計符', value: `${result.fu}符` }]
+    ? (result.fuDetail ?? [{ label: '合計符', value: `${result.fu}符` }])
     : [{ label: '満貫以上', value: '符計算は不要' }]
 
   const seed = rng.seed

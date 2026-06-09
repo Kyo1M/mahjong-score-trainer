@@ -73,6 +73,7 @@ describe('buildQuestion', () => {
       ],
       han: 3,
       fu: 80,
+      fuDetail: null,
       defen: 7700,
       fenpei: [7700, -7700],
       isLimit: false,
