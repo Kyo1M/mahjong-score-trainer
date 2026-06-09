@@ -3,8 +3,10 @@ import type { Meld, ScoreInput, ScoreResult, ScoreYaku, TileCode, Wind } from '.
 
 const { Shoupai, Util, rule } = Majiang
 
-const MLEAGUE_RULE = rule({
-  切り上げ満貫あり: true,
+// 標準ルール: 切り上げ満貫なし（30符4翻・60符3翻は満貫未満の 7700/11600 点）。
+// 数え役満なし・連風牌の雀頭は 2 符はそのまま採用する。
+const STANDARD_RULE = rule({
+  切り上げ満貫あり: false,
   数え役満あり: false,
   連風牌は2符: true,
 })
@@ -76,7 +78,7 @@ export function scoreHand(input: ScoreInput): ScoreResult {
 
   // 重要: flat な param を直接 Util.hule に渡すと throw する。必ず hule_param で正規化する。
   const param = Util.hule_param({
-    rule: MLEAGUE_RULE,
+    rule: STANDARD_RULE,
     zhuangfeng: WIND_INDEX[context.roundWind],
     menfeng: WIND_INDEX[context.seatWind],
     lizhi: context.riichi === 'ダブル立直' ? 2 : context.riichi ? 1 : 0,

@@ -88,7 +88,7 @@ function App() {
           <span className="brand__mark">点</span>
           <span>
             <strong>Mahjong Score Trainer</strong>
-            <small>Mリーグ準拠の点数計算練習</small>
+            <small>麻雀の点数計算をやさしく練習</small>
           </span>
         </Link>
         <nav className="site-nav" aria-label="メインナビゲーション">
@@ -136,44 +136,44 @@ function Home({ completed, onReset }: HomeProps) {
   return (
     <main className="home">
       <section className="hero-card">
-        <p className="eyebrow">無制限ランダム出題</p>
-        <h1>牌姿を見て、役・翻・符・支払いまで一気に鍛える。</h1>
+        <p className="eyebrow">何問でもランダム出題</p>
+        <h1>牌姿を見て、役・翻・符・支払いまで一気に身につけましょう。</h1>
         <p className="lead">
-          難易度を選んで、ランダムに生成される問題をずっと練習できます。点数計算は検証済みエンジンが採点します。
+          難易度を選ぶと、ランダムに作られた問題を好きなだけ練習できます。点数は検証済みの計算エンジンが採点するので、答え合わせも安心です。
         </p>
         <div className="hero-actions">
           <Link className="button button--primary" to="/practice">
             練習を始める
           </Link>
           <Link className="button button--ghost" to="/guide">
-            点数計算を確認
+            点数計算のしくみを見る
           </Link>
         </div>
       </section>
 
-      <section className="feature-grid" aria-label="MVPの特徴">
+      <section className="feature-grid" aria-label="このアプリの特徴">
         <article className="feature-card">
           <span>01</span>
-          <h2>工程別に採点</h2>
-          <p>成立役、翻、符、支払い点を別々に判定し、どこでズレたかをすぐ確認できます。</p>
+          <h2>工程ごとに採点します</h2>
+          <p>役・翻・符・支払いを別々に判定するので、どこで間違えたのかがひと目で分かります。</p>
         </article>
         <article className="feature-card">
           <span>02</span>
-          <h2>満貫以上は実戦寄り</h2>
-          <p>満貫以上では符を回答必須にせず、区分と支払いに集中します。</p>
+          <h2>満貫以上は実戦的に</h2>
+          <p>満貫以上では符の入力を省いて、点数の区分と支払いだけに集中できます。</p>
         </article>
         <article className="feature-card">
           <span>03</span>
-          <h2>セッションだけ記録</h2>
-          <p>ログインも長期保存もなし。任意終了で今回の結果だけを確認します。</p>
+          <h2>今回の記録だけ残します</h2>
+          <p>ログインや長期保存はありません。終了すると、今回の練習結果だけを振り返れます。</p>
         </article>
       </section>
 
       {completed > 0 && (
         <section className="resume-card">
           <div>
-            <h2>進行中のセッションがあります</h2>
-            <p>{completed}問回答済みです。続けるか、最初からやり直せます。</p>
+            <h2>練習の続きがあります</h2>
+            <p>これまでに{completed}問を解いています。続きから再開するか、最初からやり直せます。</p>
           </div>
           <div className="resume-card__actions">
             <Link className="button button--primary" to="/practice">
@@ -270,7 +270,7 @@ function PracticePage({
 
         <div className="yaku-answer-block">
           <MultiAnswerGroup
-            title="成立役（複数選択）"
+            title="成立した役（複数選べます）"
             choices={question.options.yaku}
             selectedKeys={answer.yakuKeys}
             onToggle={(yakuKey) =>
@@ -296,7 +296,7 @@ function PracticePage({
             choices={
               question.fuRequired
                 ? question.options.fu.filter((choice) => choice.key !== 'not-needed')
-                : [{ key: 'not-needed', label: '点数計算上は不要' }]
+                : [{ key: 'not-needed', label: '符の計算は不要です' }]
             }
             selectedKey={question.fuRequired ? answer.fuKey : 'not-needed'}
             onSelect={(fuKey) => setAnswer((current) => ({ ...current, fuKey }))}
@@ -314,22 +314,34 @@ function PracticePage({
         </div>
 
         <div className="practice-actions">
-          <button
-            className="button button--primary"
-            type="button"
-            onClick={submitAnswer}
-            disabled={!canSubmit || evaluation !== null}
-          >
-            採点する
-          </button>
-          <button
-            className="button button--ghost"
-            type="button"
-            onClick={revealAnswer}
-            disabled={evaluation !== null}
-          >
-            答えを見る
-          </button>
+          {evaluation === null ? (
+            <>
+              <button
+                className="button button--primary"
+                type="button"
+                onClick={submitAnswer}
+                disabled={!canSubmit}
+              >
+                採点する
+              </button>
+              <button
+                className="button button--ghost"
+                type="button"
+                onClick={revealAnswer}
+              >
+                答えを見る
+              </button>
+            </>
+          ) : (
+            <button
+              className="button button--primary"
+              type="button"
+              onClick={onNext}
+              autoFocus
+            >
+              次の問題へ
+            </button>
+          )}
           <button
             className="button button--ghost"
             type="button"
@@ -340,11 +352,7 @@ function PracticePage({
         </div>
 
         {evaluation && (
-          <FeedbackPanel
-            question={question}
-            evaluation={evaluation}
-            onNext={onNext}
-          />
+          <FeedbackPanel question={question} evaluation={evaluation} />
         )}
       </section>
     </main>
@@ -385,7 +393,7 @@ function ContextPanel({ question }: ContextPanelProps) {
       <span>{context.method === 'ron' ? 'ロン' : 'ツモ'}</span>
       <span>場風 {context.roundWind}</span>
       <span>自風 {context.seatWind}</span>
-      {context.riichi && <span>{context.riichi}</span>}
+      {context.riichi && <span>{context.riichi}（立直棒を場に出す）</span>}
       {context.conditions.map((condition) => (
         <span key={condition}>{condition}</span>
       ))}
@@ -453,7 +461,7 @@ function MultiAnswerGroup({
   return (
     <fieldset className="answer-group answer-group--wide">
       <legend>{title}</legend>
-      <p className="answer-group__hint">ドラは役ではないため、ここでは選びません。</p>
+      <p className="answer-group__hint">ドラは役ではないので、ここでは選ばないでください。</p>
       <div className="choice-list choice-list--multi">
         {choices.map((choice) => (
           <button
@@ -476,10 +484,9 @@ function MultiAnswerGroup({
 type FeedbackPanelProps = {
   question: PracticeQuestion
   evaluation: AnswerEvaluation
-  onNext: () => void
 }
 
-function FeedbackPanel({ question, evaluation, onNext }: FeedbackPanelProps) {
+function FeedbackPanel({ question, evaluation }: FeedbackPanelProps) {
   const canonical = question.canonicalInterpretation
 
   return (
@@ -491,9 +498,9 @@ function FeedbackPanel({ question, evaluation, onNext }: FeedbackPanelProps) {
             : 'feedback-summary--incorrect'
         }`}
       >
-        <strong>{evaluation.completeCorrect ? '完全正解' : '要確認'}</strong>
+        <strong>{evaluation.completeCorrect ? 'すべて正解です！' : 'おしい！もう一度確認しましょう'}</strong>
         <span>
-          正解: {yakuLabels(question, canonical.yakuKeys)} / {canonical.hanLabel}{' '}
+          正しい答え: {yakuLabels(question, canonical.yakuKeys)} / {canonical.hanLabel}{' '}
           / {canonical.fuLabel} / {canonical.paymentLabel}
         </span>
       </div>
@@ -513,13 +520,10 @@ function FeedbackPanel({ question, evaluation, onNext }: FeedbackPanelProps) {
       <div className="guide-links">
         {question.guideAnchors.map((anchor) => (
           <Link key={anchor} to={`/guide#${anchor}`}>
-            ガイド: {guideLabel(anchor)}
+            くわしくはガイド: {guideLabel(anchor)}
           </Link>
         ))}
       </div>
-      <button className="button button--primary" type="button" onClick={onNext}>
-        次の問題へ
-      </button>
     </section>
   )
 }
@@ -580,7 +584,7 @@ function ResultsPage({ stats, onReset }: ResultsPageProps) {
         <p className="eyebrow">Session Result</p>
         <h1>今回の練習結果</h1>
         {stats.total === 0 ? (
-          <p className="lead">まだ回答がありません。練習を始めると結果が表示されます。</p>
+          <p className="lead">まだ回答がありません。練習を始めると、ここに結果が表示されます。</p>
         ) : (
           <>
             <div className="score-hero">
@@ -632,42 +636,43 @@ function GuidePage() {
     <main className="guide-page">
       <section className="guide-hero">
         <p className="eyebrow">Guide</p>
-        <h1>点数計算の確認ページ</h1>
+        <h1>点数計算のしくみ</h1>
         <p className="lead">
-          MVPでは場ゾロを除いた一般的な翻数表記で統一します。Mリーグ準拠として、切り上げ満貫あり、数え役満なし、連風牌の雀頭は2符です。
+          このアプリでは、場ゾロを除いた一般的な翻数で表記します。ルールは「切り上げ満貫なし・数え役満なし・連風牌の雀頭は2符」で統一しています。
         </p>
       </section>
 
       <article className="guide-section" id="flow">
         <h2>基本の流れ</h2>
         <ol>
-          <li>成立役を見抜く。ドラは役ではなく、翻数に足す要素として扱う。</li>
-          <li>成立役とドラを合わせて翻数を出す。</li>
-          <li>満貫未満なら符を積み、10符単位へ切り上げる。</li>
-          <li>親子とロン/ツモで支払い点を選ぶ。</li>
+          <li>まず成立した役を見抜きます。ドラは役ではなく、翻数に足す要素として扱います。</li>
+          <li>成立役とドラを合わせて、翻数を数えます。</li>
+          <li>満貫に届かないときは符を積み、10符単位に切り上げます。</li>
+          <li>親か子か、ロンかツモかに合わせて支払い点を選びます。</li>
         </ol>
       </article>
 
       <article className="guide-section" id="fu">
-        <h2>符計算の要点</h2>
+        <h2>符の数え方のポイント</h2>
         <div className="reference-grid">
           <InfoCard title="基本">
-            副底20符。門前ロンは10符。ツモは原則2符だが、平和ツモは20符固定。
+            まず副底が20符、門前ロンはさらに10符です。ツモは原則2符ですが、平和ツモだけは20符に固定します。
           </InfoCard>
           <InfoCard title="待ち">
-            単騎、嵌張、辺張は2符。両面待ちは0符。
+            単騎・嵌張・辺張の待ちは2符です。両面待ちは0符になります。
           </InfoCard>
           <InfoCard title="雀頭">
-            役牌、場風、自風は2符。Mリーグでは連風牌の雀頭も2符。
+            役牌・場風・自風の雀頭は2符です。連風牌（場風かつ自風）の雀頭も2符として数えます。
           </InfoCard>
           <InfoCard title="七対子" id="chiitoi">
-            七対子は25符固定。通常の副底や待ち符は積まない。
+            七対子は25符に固定します。副底や待ちの符は積みません。
           </InfoCard>
         </div>
       </article>
 
       <article className="guide-section" id="table">
-        <h2>頻出点数</h2>
+        <h2>よく出る点数（子のロン）</h2>
+        <p>切り上げ満貫は採用していないので、30符4翻と60符3翻は満貫ではなく7700点です。</p>
         <div className="score-table-wrap">
           <table className="score-table">
             <thead>
@@ -699,11 +704,11 @@ function GuidePage() {
                 <td>3900</td>
                 <td>5200</td>
                 <td>6400</td>
-                <td>8000</td>
+                <td>7700</td>
               </tr>
               <tr>
                 <th>4翻</th>
-                <td>8000</td>
+                <td>7700</td>
                 <td>8000</td>
                 <td>8000</td>
                 <td>8000</td>
@@ -716,17 +721,17 @@ function GuidePage() {
       <article className="guide-section" id="limit">
         <h2>満貫以上</h2>
         <ul>
-          <li>5翻、30符4翻、60符3翻は満貫。</li>
-          <li>6〜7翻は跳満、8〜10翻は倍満、11翻以上は三倍満。</li>
-          <li>数え役満は採用せず、役満以外は三倍満が上限。</li>
-          <li id="yakuman">役満の複合はあり。個別のダブル役満は扱わない。</li>
+          <li>5翻以上は満貫です（切り上げ満貫は採用していません）。</li>
+          <li>6〜7翻は跳満、8〜10翻は倍満、11翻以上は三倍満になります。</li>
+          <li>数え役満は採用しないので、役満以外は三倍満が上限です。</li>
+          <li id="yakuman">役満は複合しますが、個別のダブル役満は扱いません。</li>
         </ul>
       </article>
 
       <article className="guide-section" id="payment">
         <h2>支払いの読み方</h2>
         <p>
-          子のツモ表記は「子の支払い / 親の支払い」です。例: 満貫ツモは
+          子のツモは「子の支払い / 親の支払い」と表記します。たとえば満貫ツモは
           2000 / 4000点、親の満貫ツモは4000点オールです。
         </p>
       </article>
@@ -734,7 +739,7 @@ function GuidePage() {
       <article className="guide-section" id="kuisagari">
         <h2>喰い下がり</h2>
         <p>
-          三色同順、一気通貫、混一色、純全帯么九、清一色などは副露で1翻下がります。問題では副露の有無を必ず表示します。
+          三色同順・一気通貫・混一色・純全帯幺九・清一色などは、副露すると翻数が1翻下がります。問題では副露の有無を必ず表示します。
         </p>
       </article>
     </main>

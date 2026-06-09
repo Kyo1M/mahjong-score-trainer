@@ -9,6 +9,7 @@ import type {
 import { mapYakuName, yakuCatalog } from './yaku-map'
 import { hanChoices, paymentChoice, paymentDistractors } from './distractors'
 import { classifyDifficulty } from './difficulty'
+import { tileLabel } from './tiles'
 import type { Rng } from './rng'
 
 const FU_CHOICES: AnswerChoice[] = [
@@ -74,7 +75,7 @@ function yakuOptions(correct: string[], rng: Rng): AnswerChoice[] {
 
 function doraNote(input: ScoreInput): string {
   const ind = input.context.doraIndicators[0]
-  return ind ? `ドラ表示牌は ${ind}。` : ''
+  return ind ? `ドラ表示牌は${tileLabel(ind)}です。` : ''
 }
 
 export function buildQuestion(
@@ -113,7 +114,7 @@ export function buildQuestion(
     id: `gen-${difficulty}-${seed}-${result.han}-${result.fu ?? 'L'}-${result.defen}`,
     title: yakuKeys.length ? `${yakuCatalog[yakuKeys[0]].label}を含む手` : '点数を計算',
     difficulty,
-    prompt: `${input.context.dealer ? '親' : '子'}の${input.context.method === 'ron' ? 'ロン' : 'ツモ'}和了。成立役・翻・符・支払いを選んでください。`,
+    prompt: `${input.context.dealer ? '親' : '子'}の${input.context.method === 'ron' ? 'ロン' : 'ツモ'}和了です。成立役・翻・符・支払いを選んでください。`,
     context: input.context,
     hand: input.hand,
     winningTile: input.winningTile,
@@ -130,10 +131,10 @@ export function buildQuestion(
     yaku: yakuBreakdown,
     fu: fuBreakdown,
     explanation:
-      `成立役は ${yakuText}。${doraNote(input)}` +
+      `成立した役は${yakuText}です。${doraNote(input)}` +
       (fuRequired
-        ? `${result.han}翻${result.fu}符で${payment.label}です。`
-        : `${result.han}翻以上の満貫クラスで${payment.label}です。`),
+        ? `${result.han}翻${result.fu}符で、${payment.label}になります。`
+        : `${result.han}翻以上の満貫クラスで、${payment.label}になります。`),
     guideAnchors: fuRequired ? ['fu', 'table'] : ['limit', 'payment'],
   }
 }

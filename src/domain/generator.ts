@@ -38,7 +38,7 @@ function ctx(
     riichi: over.riichi,
     conditions: over.conditions ?? [],
     doraIndicators: over.doraIndicators ?? [],
-    ruleNotes: ['Mリーグ準拠', '0本場・供託なし'],
+    ruleNotes: ['切り上げ満貫なし', '0本場・供託なし'],
   }
 }
 

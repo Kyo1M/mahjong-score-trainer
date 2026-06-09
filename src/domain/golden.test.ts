@@ -23,8 +23,9 @@ describe('golden: engine vs existing questions', () => {
     const q1 = practiceQuestions.find((q) => q.id === 'q-pinfu-ron-30-4-child')!
     const r1 = scoreHand({ hand: q1.hand, winningTile: q1.winningTile, melds: q1.melds, context: q1.context })
     expect(r1.han).toBe(4)
-    expect(r1.isLimit).toBe(true)
-    expect(r1.defen).toBe(8000)
+    // 標準ルール（切り上げ満貫なし）では 30符4翻 は満貫未満の 7700 点。
+    expect(r1.isLimit).toBe(false)
+    expect(r1.defen).toBe(7700)
 
     const q3 = practiceQuestions.find((q) => q.id === 'q-chiitoi-ron-25-4-child')!
     const r3 = scoreHand({ hand: q3.hand, winningTile: q3.winningTile, melds: q3.melds, context: q3.context })
