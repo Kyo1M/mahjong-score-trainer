@@ -5,10 +5,9 @@ import { guideLabel } from '../pages/guide-labels'
 type FeedbackPanelProps = {
   question: PracticeQuestion
   evaluation: AnswerEvaluation
-  onNext: () => void
 }
 
-export function FeedbackPanel({ question, evaluation, onNext }: FeedbackPanelProps) {
+export function FeedbackPanel({ question, evaluation }: FeedbackPanelProps) {
   const canonical = question.canonicalInterpretation
 
   return (
@@ -45,11 +44,6 @@ export function FeedbackPanel({ question, evaluation, onNext }: FeedbackPanelPro
             くわしくはガイド: {guideLabel(anchor)}
           </Link>
         ))}
-      </div>
-      <div className="feedback-panel__actions">
-        <button className="button button--primary" type="button" onClick={onNext}>
-          次の問題へ
-        </button>
       </div>
     </section>
   )

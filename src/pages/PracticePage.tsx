@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DoraView, HandView } from '../components/TileView'
 import { AnswerGroup, MultiAnswerGroup } from '../components/AnswerGroup'
 import { FeedbackPanel } from '../components/FeedbackPanel'
@@ -11,12 +11,16 @@ import type {
 
 const emptyAnswer: UserAnswer = { yakuKeys: [], hanKey: null, fuKey: null, paymentKey: null }
 
+const DIFFICULTY_FILTERS: DifficultyFilter[] = ['mix', 'starter', 'standard', 'advanced', 'limit']
+
 type PracticePageProps = {
   question: PracticeQuestion
   completedCount: number
   difficulty: DifficultyFilter
   onSetDifficulty: (d: DifficultyFilter) => void
   onAnswered: (evaluation: AnswerEvaluation, elapsedMs: number) => void
+  // Task 7 で sticky バーの「次の問題へ」に使う。現段階では未使用なので
+  // noUnusedParameters を避けるため分割代入では受け取らない。
   onNext: () => void
 }
 
@@ -26,7 +30,6 @@ export function PracticePage({
   difficulty,
   onSetDifficulty,
   onAnswered,
-  onNext,
 }: PracticePageProps) {
   const navigate = useNavigate()
   const [answer, setAnswer] = useState<UserAnswer>(emptyAnswer)
@@ -76,15 +79,31 @@ export function PracticePage({
   return (
     <main className="practice-page">
       <section className="practice-card">
-        <DifficultyFilterBar value={difficulty} onChange={onSetDifficulty} />
         <div className="practice-card__topline">
           <div>
-            <p className="eyebrow">Question {questionNumber}</p>
+            <p className="eyebrow">第 {questionNumber} 問</p>
             <h1>{question.title}</h1>
           </div>
-          <span className={`difficulty difficulty--${question.difficulty}`}>
-            {difficultyLabel(question.difficulty)}
-          </span>
+          <div className="practice-card__meta">
+            <span className={`difficulty difficulty--${question.difficulty}`}>
+              {difficultyLabel(question.difficulty)}
+            </span>
+            <label className="difficulty-select">
+              難易度
+              <select
+                value={difficulty}
+                onChange={(event) =>
+                  onSetDifficulty(event.target.value as DifficultyFilter)
+                }
+              >
+                {DIFFICULTY_FILTERS.map((d) => (
+                  <option key={d} value={d}>
+                    {difficultyLabel(d)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
 
         <p className="prompt">{question.prompt}</p>
@@ -113,13 +132,6 @@ export function PracticePage({
 
         <div className="answer-grid">
           <AnswerGroup
-            title="翻 / 役満"
-            choices={question.options.han}
-            selectedKey={answer.hanKey}
-            onSelect={(hanKey) => setAnswer((current) => ({ ...current, hanKey }))}
-            disabled={evaluation !== null}
-          />
-          <AnswerGroup
             title="符"
             choices={
               question.fuRequired
@@ -129,6 +141,13 @@ export function PracticePage({
             selectedKey={question.fuRequired ? answer.fuKey : 'not-needed'}
             onSelect={(fuKey) => setAnswer((current) => ({ ...current, fuKey }))}
             disabled={evaluation !== null || !question.fuRequired}
+          />
+          <AnswerGroup
+            title="翻 / 役満"
+            choices={question.options.han}
+            selectedKey={answer.hanKey}
+            onSelect={(hanKey) => setAnswer((current) => ({ ...current, hanKey }))}
+            disabled={evaluation !== null}
           />
           <AnswerGroup
             title={question.context.method === 'ron' ? 'ロン支払い' : 'ツモ支払い'}
@@ -142,7 +161,7 @@ export function PracticePage({
         </div>
 
         <div className="practice-actions">
-          {evaluation === null ? (
+          {evaluation === null && (
             <>
               <button
                 className="button button--primary"
@@ -160,18 +179,9 @@ export function PracticePage({
                 答えを見る
               </button>
             </>
-          ) : (
-            <button
-              className="button button--primary"
-              type="button"
-              onClick={onNext}
-              autoFocus
-            >
-              次の問題へ
-            </button>
           )}
           <button
-            className="button button--ghost"
+            className="practice-end"
             type="button"
             onClick={() => navigate('/results')}
           >
@@ -180,32 +190,10 @@ export function PracticePage({
         </div>
 
         {evaluation && (
-          <FeedbackPanel question={question} evaluation={evaluation} onNext={onNext} />
+          <FeedbackPanel question={question} evaluation={evaluation} />
         )}
       </section>
     </main>
-  )
-}
-
-const DIFFICULTY_FILTERS: DifficultyFilter[] = ['mix', 'starter', 'standard', 'advanced', 'limit']
-
-function DifficultyFilterBar({
-  value, onChange,
-}: { value: DifficultyFilter; onChange: (d: DifficultyFilter) => void }) {
-  return (
-    <div className="difficulty-bar" role="group" aria-label="難易度フィルタ">
-      {DIFFICULTY_FILTERS.map((d) => (
-        <button
-          key={d}
-          type="button"
-          className={`difficulty-chip ${value === d ? 'is-active' : ''}`}
-          aria-pressed={value === d}
-          onClick={() => onChange(d)}
-        >
-          {difficultyLabel(d)}
-        </button>
-      ))}
-    </div>
   )
 }
 
