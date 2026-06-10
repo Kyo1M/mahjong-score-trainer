@@ -3,6 +3,7 @@ import { buildQuestion } from './question-factory'
 import { evaluateAnswer } from './scoring'
 import { generate } from './generator'
 import { createRng } from './rng'
+import { yakuCatalog } from './yaku-map'
 import type { ScoreInput, ScoreResult } from './types'
 
 describe('buildQuestion', () => {
@@ -45,6 +46,20 @@ describe('buildQuestion', () => {
       expect(q.canonicalInterpretation.fuKey, q.id).toBe(String(result.fu))
     }
     expect(fuRequiredSeen).toBeGreaterThan(0)
+  })
+
+  it('title and prompt never leak yaku names', () => {
+    const rng = createRng(555)
+    const allYakuLabels = Object.values(yakuCatalog).map((c) => c.label)
+    for (let i = 0; i < 100; i++) {
+      const { input, result } = generate('mix', rng)
+      const q = buildQuestion(input, result, rng)
+      expect(q.title, q.id).toMatch(/^(親|子)の(ロン|ツモ)和了$/)
+      for (const label of allYakuLabels) {
+        expect(q.title, q.id).not.toContain(label)
+        expect(q.prompt, q.id).not.toContain(label)
+      }
+    }
   })
 
   it('inserts an out-of-menu fu value so it stays selectable and complete-correct', () => {

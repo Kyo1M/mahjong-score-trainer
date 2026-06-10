@@ -45,6 +45,16 @@ const CONFUSABLE: Record<string, string[]> = {
   sananko: ['toitoi'],
   chiitoitsu: ['toitoi', 'iipeiko', 'ryanpeiko'],
   iipeiko: ['ryanpeiko', 'pinfu', 'sanshoku'],
+  ryanpeiko: ['iipeiko', 'chiitoitsu'],
+  ittsu: ['sanshoku', 'chinitsu', 'honitsu'],
+  sanshoku: ['sanshoku-doukou', 'ittsu', 'pinfu'],
+  'sanshoku-doukou': ['sanshoku', 'toitoi', 'sananko'],
+  chanta: ['junchan', 'honroutou'],
+  junchan: ['chanta', 'chinitsu'],
+  honroutou: ['toitoi', 'chanta', 'chiitoitsu'],
+  shousangen: ['yakuhai-haku', 'yakuhai-hatsu', 'yakuhai-chun', 'honroutou'],
+  'yakuhai-bakaze': ['yakuhai-jikaze'],
+  'yakuhai-jikaze': ['yakuhai-bakaze'],
 }
 
 function correctYakuKeys(result: ScoreResult): string[] {
@@ -110,11 +120,13 @@ export function buildQuestion(
 
   const seed = rng.seed
   const yakuText = yakuKeys.map((k) => yakuCatalog[k].label).join('・') || '役'
+  const role = input.context.dealer ? '親' : '子'
+  const methodLabel = input.context.method === 'ron' ? 'ロン' : 'ツモ'
   return {
     id: `gen-${difficulty}-${seed}-${result.han}-${result.fu ?? 'L'}-${result.defen}`,
-    title: yakuKeys.length ? `${yakuCatalog[yakuKeys[0]].label}を含む手` : '点数を計算',
+    title: `${role}の${methodLabel}和了`,
     difficulty,
-    prompt: `${input.context.dealer ? '親' : '子'}の${input.context.method === 'ron' ? 'ロン' : 'ツモ'}和了です。成立役・翻・符・支払いを選んでください。`,
+    prompt: '成立した役・符・翻・支払いを選んでください。',
     context: input.context,
     hand: input.hand,
     winningTile: input.winningTile,
@@ -133,7 +145,7 @@ export function buildQuestion(
     explanation:
       `成立した役は${yakuText}です。${doraNote(input)}` +
       (fuRequired
-        ? `${result.han}翻${result.fu}符で、${payment.label}になります。`
+        ? `${result.fu}符${result.han}翻で、${payment.label}になります。`
         : `${result.han}翻以上の満貫クラスで、${payment.label}になります。`),
     guideAnchors: fuRequired ? ['fu', 'table'] : ['limit', 'payment'],
   }
