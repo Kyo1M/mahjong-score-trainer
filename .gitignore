@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Playwright MCP browser artifacts
+.playwright-mcp/
+
+# Superpowers brainstorm sessions (mockups)
+.superpowers/
+
+# Claude Code worktrees
+.claude/worktrees/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

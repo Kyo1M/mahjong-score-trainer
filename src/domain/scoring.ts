@@ -45,48 +45,28 @@ export function evaluateAnswer(
   }
 }
 
-export function calculateStats(
-  completed: CompletedQuestion[],
-  questions: PracticeQuestion[],
-): SessionStats {
+export function calculateStats(completed: CompletedQuestion[]): SessionStats {
   if (completed.length === 0) {
     return {
-      total: 0,
-      completeCorrect: 0,
-      completeRate: 0,
-      yakuRate: 0,
-      hanRate: 0,
-      fuRate: null,
-      paymentRate: 0,
-      bestStreak: 0,
-      currentStreak: 0,
-      averageSeconds: 0,
+      total: 0, completeCorrect: 0, completeRate: 0, yakuRate: 0, hanRate: 0,
+      fuRate: null, paymentRate: 0, bestStreak: 0, currentStreak: 0, averageSeconds: 0,
     }
   }
 
-  const byId = new Map(questions.map((question) => [question.id, question]))
-  const completeCorrect = completed.filter(
-    (entry) => entry.evaluation.completeCorrect,
-  ).length
-  const hanCorrect = completed.filter((entry) => entry.evaluation.hanCorrect).length
-  const yakuCorrect = completed.filter((entry) => entry.evaluation.yakuCorrect).length
-  const paymentCorrect = completed.filter(
-    (entry) => entry.evaluation.paymentCorrect,
-  ).length
-  const fuEntries = completed.filter((entry) => byId.get(entry.questionId)?.fuRequired)
-  const fuCorrect = fuEntries.filter((entry) => entry.evaluation.fuCorrect).length
+  const completeCorrect = completed.filter((e) => e.evaluation.completeCorrect).length
+  const hanCorrect = completed.filter((e) => e.evaluation.hanCorrect).length
+  const yakuCorrect = completed.filter((e) => e.evaluation.yakuCorrect).length
+  const paymentCorrect = completed.filter((e) => e.evaluation.paymentCorrect).length
+  const fuEntries = completed.filter((e) => e.fuRequired)
+  const fuCorrect = fuEntries.filter((e) => e.evaluation.fuCorrect).length
   const streaks = completed.reduce(
     (state, entry) => {
       const current = entry.evaluation.completeCorrect ? state.current + 1 : 0
-      return {
-        current,
-        best: Math.max(state.best, current),
-      }
+      return { current, best: Math.max(state.best, current) }
     },
     { current: 0, best: 0 },
   )
-  const averageMs =
-    completed.reduce((sum, entry) => sum + entry.elapsedMs, 0) / completed.length
+  const averageMs = completed.reduce((sum, e) => sum + e.elapsedMs, 0) / completed.length
 
   return {
     total: completed.length,

@@ -1,0 +1,89 @@
+<!doctype html>
+<!-- OGP画像(public/ogp.png)の生成用テンプレート。
+     1200x630 のビューポートで開いてスクリーンショットを撮る。 -->
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      body {
+        align-items: center;
+        background:
+          radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.78), transparent 30rem),
+          radial-gradient(circle at 85% 4%, rgba(168, 110, 29, 0.18), transparent 34rem),
+          radial-gradient(circle at 50% 100%, rgba(15, 74, 56, 0.1), transparent 30rem),
+          linear-gradient(135deg, #f5ead7, #e7d7bc);
+        display: flex;
+        flex-direction: column;
+        font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+        gap: 40px;
+        height: 630px;
+        justify-content: center;
+        overflow: hidden;
+        width: 1200px;
+      }
+
+      .tiles {
+        display: flex;
+        gap: 5px;
+      }
+
+      .tile {
+        background: linear-gradient(180deg, #fffdf6, #fff8e8);
+        border: 2px solid rgba(84, 57, 20, 0.22);
+        border-radius: 10px;
+        box-shadow:
+          0 12px 20px rgba(0, 0, 0, 0.18),
+          inset 0 -7px 0 #cdb88e;
+        padding: 5px;
+      }
+
+      .tile img {
+        display: block;
+        width: 56px;
+      }
+
+      .tile.win {
+        margin-left: 26px;
+        outline: 5px solid rgba(255, 207, 92, 0.95);
+        outline-offset: 3px;
+      }
+
+      h1 {
+        color: #1f2d24;
+        font-size: 92px;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+
+      p {
+        color: #6f604d;
+        font-size: 34px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tiles">
+      <span class="tile"><img src="/tiles/Man2.svg" /></span>
+      <span class="tile"><img src="/tiles/Man3.svg" /></span>
+      <span class="tile"><img src="/tiles/Man4.svg" /></span>
+      <span class="tile"><img src="/tiles/Man5.svg" /></span>
+      <span class="tile"><img src="/tiles/Man6.svg" /></span>
+      <span class="tile"><img src="/tiles/Man7.svg" /></span>
+      <span class="tile"><img src="/tiles/Pin8.svg" /></span>
+      <span class="tile"><img src="/tiles/Pin8.svg" /></span>
+      <span class="tile"><img src="/tiles/Sou4.svg" /></span>
+      <span class="tile"><img src="/tiles/Sou5.svg" /></span>
+      <span class="tile"><img src="/tiles/Chun.svg" /></span>
+      <span class="tile"><img src="/tiles/Chun.svg" /></span>
+      <span class="tile"><img src="/tiles/Chun.svg" /></span>
+      <span class="tile win"><img src="/tiles/Sou6.svg" /></span>
+    </div>
+    <h1>麻雀点数計算練習</h1>
+    <p>役・翻・符・点数を、実戦形式の問題でトレーニング</p>
+  </body>
+</html>

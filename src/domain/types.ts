@@ -114,10 +114,41 @@ export type AnswerEvaluation = {
 
 export type CompletedQuestion = {
   questionId: string
+  fuRequired: boolean
   evaluation: AnswerEvaluation
   elapsedMs: number
   answeredAt: string
 }
+
+export type ScoreInput = {
+  hand: TileCode[]          // 門前テンパイ牌（和了牌・副露牌を含まない）
+  winningTile: TileCode
+  melds: Meld[]
+  context: WinContext
+}
+
+export type ScoreYaku = {
+  name: string              // majiang の日本語役名
+  han: number
+  isDora: boolean           // ドラ/赤ドラ/裏ドラ（役選択肢から除外）
+}
+
+export type ScoreResult = {
+  valid: boolean            // 和了かつ1役以上かつ役満でない
+  yaku: ScoreYaku[]
+  han: number
+  fu: number | null         // 満貫以上で点数計算に不要な場合 null
+  fuDetail: BreakdownItem[] | null  // 符の内訳（副底・各面子・待ち・合計・切り上げ）
+  defen: number
+  fenpei: number[]
+  isLimit: boolean          // 満貫以上（fuRequired=false の根拠）
+  dealer: boolean
+  method: WinMethod
+}
+
+export type DifficultyFilter = Difficulty | 'mix'
+
+export type GeneratedHand = ScoreInput & { seed: number }
 
 export type SessionStats = {
   total: number
