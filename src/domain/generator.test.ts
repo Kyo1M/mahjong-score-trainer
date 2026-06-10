@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { generate } from './generator'
+import { generate, yakuSignature, __themesForTest } from './generator'
 import { scoreHand } from './majiang-adapter'
 import { classifyDifficulty } from './difficulty'
 import { mapYakuName } from './yaku-map'
@@ -62,5 +62,57 @@ describe('generate (property tests)', () => {
         expect(classifyDifficulty(result, input), `${filter}:${i}`).toBe(filter)
       }
     }
+  })
+})
+
+describe('generate (variety)', () => {
+  it('mix yields at least 10 distinct yaku kinds across 200 questions', () => {
+    const rng = createRng(2026)
+    const kinds = new Set<string>()
+    for (let i = 0; i < 200; i++) {
+      const { result } = generate('mix', rng)
+      for (const y of result.yaku) {
+        if (!y.isDora) kinds.add(mapYakuName(y.name)!.key)
+      }
+    }
+    expect(kinds.size).toBeGreaterThanOrEqual(10)
+  })
+
+  it('mix yields some 50fu+ questions below mangan (fu drills)', () => {
+    const rng = createRng(777)
+    let highFu = 0
+    for (let i = 0; i < 200; i++) {
+      const { result } = generate('mix', rng)
+      if (!result.isLimit && (result.fu ?? 0) >= 50) highFu++
+    }
+    expect(highFu).toBeGreaterThan(0)
+  })
+
+  it('fu drill builds land between 50 and 70 fu when accepted', () => {
+    const rng = createRng(4242)
+    let accepted = 0
+    for (let i = 0; i < 300 && accepted < 20; i++) {
+      const input = __themesForTest.fuDrill.build(rng)
+      if (!input) continue
+      const result = scoreHand(input)
+      if (!result.valid || result.isLimit || (result.fu ?? 0) < 50) continue
+      accepted++
+      expect(result.fu, `iter ${i}`).toBeLessThanOrEqual(70)
+    }
+    expect(accepted).toBeGreaterThan(0)
+  })
+
+  it('avoid signatures suppress immediate repeats (best effort)', () => {
+    const rng = createRng(31337)
+    let prev = ''
+    let repeats = 0
+    for (let i = 0; i < 100; i++) {
+      const { result } = generate('mix', rng, { avoid: prev ? [prev] : [] })
+      const sig = yakuSignature(result)
+      if (sig === prev) repeats++
+      prev = sig
+    }
+    // フォールバックパスはガードを無視するので 0 とは限らないが、ほぼ抑止される
+    expect(repeats).toBeLessThanOrEqual(2)
   })
 })
