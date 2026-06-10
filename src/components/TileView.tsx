@@ -49,7 +49,7 @@ type HandViewProps = {
 
 export function HandView({ tiles, winningTile, melds, riichi }: HandViewProps) {
   return (
-    <div className="hand-view" aria-label="和了牌姿">
+    <div className="hand-view" aria-label="和了した手牌">
       {riichi && (
         <div className="hand-view__riichi">
           <RiichiStick label={riichi} />

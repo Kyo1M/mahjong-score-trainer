@@ -26,15 +26,26 @@
 
 .brand__mark {
   align-items: center;
-  background: linear-gradient(145deg, var(--brass), #f3d38c);
-  border-radius: 13px;
-  box-shadow: 0 10px 24px rgba(97, 68, 26, 0.2);
-  color: #1d1606;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 248, 232, 0.92)),
+    var(--tile-face);
+  border: 1px solid rgba(84, 57, 20, 0.25);
+  border-radius: 9px;
+  box-shadow:
+    0 8px 18px rgba(97, 68, 26, 0.22),
+    inset 0 -5px 0 var(--tile-edge),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   display: grid;
-  font-weight: 900;
   height: 44px;
   place-items: center;
-  width: 44px;
+  width: 36px;
+}
+
+.brand__mark img {
+  display: block;
+  height: auto;
+  margin-bottom: 3px;
+  width: 24px;
 }
 
 .brand strong,
@@ -223,6 +234,12 @@ h3 {
   width: min(100%, 420px);
 }
 
+.hero-note {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 14px 0 0;
+}
+
 .home-cta-bottom {
   display: flex;
   justify-content: center;
@@ -386,8 +403,20 @@ h3 {
   gap: clamp(2px, 0.9vw, 6px);
 }
 
+/* 手牌の列はコンテナ幅に合わせて縮み、どの画面幅でも1行に収まる（上限47px）。 */
 .tile-row--hand {
-  min-width: max-content;
+  width: 100%;
+}
+
+.tile-row--hand .tile {
+  flex: 1 1 0;
+  max-width: 53px; /* img 47px + padding 4px + border 2px */
+  min-width: 0;
+}
+
+.tile-row--hand .tile img {
+  max-width: 47px;
+  width: 100%;
 }
 
 .tile {
@@ -571,6 +600,14 @@ h3 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.reference-grid--fu {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reference-grid--fu-exceptions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .result-badge {
   border-radius: 999px;
   font-weight: 900;
@@ -692,6 +729,57 @@ h3 {
   overflow-x: auto;
 }
 
+/* 符ガイドの要素 */
+.tile-strip {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+.fu-steps li {
+  margin-bottom: 6px;
+}
+
+.fu-steps strong,
+.fu-examples strong {
+  color: var(--text);
+}
+
+.fu-subheading {
+  font-size: 1.1rem;
+  margin: 28px 0 8px;
+}
+
+.fu-examples {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.fu-examples li {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fu-examples--row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 12px;
+}
+
+.score-table.score-table--fu {
+  min-width: 420px;
+}
+
+.guide-section .breakdown-list {
+  margin-top: 14px;
+}
+
 .score-table {
   border-collapse: collapse;
   min-width: 620px;
@@ -748,6 +836,213 @@ h3 {
   .practice-actions .button,
   .resume-card__actions .button {
     flex: 1 1 100%;
+  }
+}
+
+/* 縦持ち時のみ表示する横持ちヒント */
+.rotate-hint {
+  display: none;
+}
+
+@media (max-width: 480px) and (orientation: portrait) {
+  .rotate-hint {
+    align-items: center;
+    background: rgba(255, 252, 244, 0.8);
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    color: var(--muted);
+    display: flex;
+    font-size: 0.82rem;
+    gap: 8px;
+    justify-content: space-between;
+    margin: -8px 0 16px;
+    padding: 8px 12px;
+  }
+
+  .rotate-hint button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 1.05rem;
+    line-height: 1;
+    padding: 4px 6px;
+  }
+}
+
+/* スマホ縦持ち: 余白を圧縮し、牌を密着させて手牌14枚を1行に収める。 */
+@media (max-width: 480px) {
+  .home,
+  .practice-page,
+  .results-page,
+  .guide-page {
+    padding: 18px 10px 30px;
+  }
+
+  .hero-card,
+  .results-card,
+  .guide-hero {
+    padding: 26px 18px;
+  }
+
+  .practice-card {
+    padding: 14px 12px;
+  }
+
+  .guide-section {
+    padding: 18px 14px;
+  }
+
+  .site-header {
+    gap: 10px;
+    padding: 10px 14px;
+  }
+
+  .hand-view {
+    border-radius: 16px;
+    margin: 16px 0;
+    padding: 10px 8px;
+  }
+
+  .tile-row--hand {
+    gap: 0;
+  }
+
+  .tile-row--hand .tile {
+    border-radius: 4px;
+    padding: 1px;
+  }
+
+  .tile--winning {
+    margin-left: 6px;
+    outline-offset: 1px;
+    outline-width: 2px;
+  }
+
+  .context-panel {
+    gap: 6px;
+    margin: 16px 0;
+  }
+
+  .context-panel > span {
+    font-size: 0.85rem;
+    min-height: 32px;
+    padding: 3px 10px;
+  }
+
+  .answer-group {
+    padding: 12px;
+  }
+
+  .practice-card h1 {
+    font-size: clamp(1.4rem, 6vw, 2rem);
+  }
+
+  .score-table {
+    min-width: 480px;
+  }
+
+  .score-table th,
+  .score-table td {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+
+  .fu-examples--row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* スマホ横持ち: 縦方向の余白とヘッダーを圧縮して手牌と回答欄を見やすく。 */
+@media (orientation: landscape) and (max-height: 520px) {
+  .site-header {
+    align-items: center;
+    flex-direction: row;
+    padding: 8px clamp(14px, 3vw, 24px);
+    position: static;
+  }
+
+  .brand small {
+    display: none;
+  }
+
+  .brand__mark {
+    height: 34px;
+    width: 28px;
+  }
+
+  .brand__mark img {
+    margin-bottom: 2px;
+    width: 18px;
+  }
+
+  .site-nav {
+    display: flex;
+  }
+
+  .home,
+  .practice-page,
+  .results-page,
+  .guide-page {
+    padding: 16px 16px 28px;
+  }
+
+  .hero-card,
+  .results-card,
+  .guide-hero {
+    padding: 24px 28px;
+  }
+
+  .practice-card {
+    padding: 16px 18px;
+  }
+
+  /* 手牌がファーストビューに入るよう、問題上部の要素を圧縮する。 */
+  .practice-card__topline {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .practice-card h1 {
+    font-size: 1.45rem;
+    margin-bottom: 6px;
+  }
+
+  .practice-card .eyebrow {
+    margin-bottom: 4px;
+  }
+
+  .difficulty-bar {
+    margin-bottom: 10px;
+  }
+
+  .difficulty-chip {
+    min-height: 36px;
+    padding: 4px 10px;
+  }
+
+  .difficulty {
+    padding: 4px 10px;
+  }
+
+  .prompt {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+  }
+
+  .context-panel > span {
+    min-height: 32px;
+    padding: 2px 10px;
+  }
+
+  .hand-view {
+    margin: 12px 0;
+    padding: 10px 12px;
+  }
+
+  .context-panel {
+    margin: 10px 0;
   }
 }
 

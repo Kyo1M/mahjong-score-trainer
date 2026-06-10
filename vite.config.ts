@@ -7,5 +7,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // .claude/worktrees に残る過去セッションのコピーを拾わない。
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.claude/**'],
   },
 })

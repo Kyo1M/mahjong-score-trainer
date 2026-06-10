@@ -1,7 +1,8 @@
-import { Link, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
+import { Link, Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import './App.css'
-import { DoraView, HandView } from './components/TileView'
+import { DoraView, HandView, TileView } from './components/TileView'
 import { calculateStats, evaluateAnswer, formatRate } from './domain/scoring'
 import { generate } from './domain/generator'
 import { buildQuestion } from './domain/question-factory'
@@ -9,7 +10,7 @@ import { createRng } from './domain/rng'
 import { difficultyLabel } from './domain/difficulty-label'
 import type {
   AnswerChoice, AnswerEvaluation, CompletedQuestion, DifficultyFilter,
-  PracticeQuestion, SessionStats, UserAnswer,
+  PracticeQuestion, SessionStats, TileCode, UserAnswer,
 } from './domain/types'
 
 const storageKey = 'mahjong-score-trainer-session-v3'
@@ -85,10 +86,12 @@ function App() {
     <div className="app-shell">
       <header className="site-header">
         <Link className="brand" to="/">
-          <span className="brand__mark">点</span>
+          <span className="brand__mark">
+            <img src="/tiles/Chun.svg" alt="" />
+          </span>
           <span>
-            <strong>Mahjong Score Trainer</strong>
-            <small>麻雀の点数計算をやさしく練習</small>
+            <strong>麻雀点数計算練習</strong>
+            <small>役・翻・符・点数をまとめてトレーニング</small>
           </span>
         </Link>
         <nav className="site-nav" aria-label="メインナビゲーション">
@@ -122,6 +125,7 @@ function App() {
           path="/results"
           element={<ResultsPage stats={stats} onReset={resetSession} />}
         />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   )
@@ -137,9 +141,9 @@ function Home({ completed, onReset }: HomeProps) {
     <main className="home">
       <section className="hero-card">
         <p className="eyebrow">何問でもランダム出題</p>
-        <h1>牌姿を見て、役・翻・符・支払いまで一気に身につけましょう。</h1>
+        <h1>麻雀の点数計算、もう迷わない。</h1>
         <p className="lead">
-          難易度を選ぶと、ランダムに作られた問題を好きなだけ練習できます。点数は検証済みの計算エンジンが採点するので、答え合わせも安心です。
+          実戦と同じ形式のランダム問題で、役・翻・符・点数の数え方を繰り返し練習。役・翻・符・支払いを工程ごとに採点するので、どこでつまずいたかすぐ分かります。
         </p>
         <div className="hero-actions">
           <Link className="button button--primary" to="/practice">
@@ -149,23 +153,24 @@ function Home({ completed, onReset }: HomeProps) {
             点数計算のしくみを見る
           </Link>
         </div>
+        <p className="hero-note">ログイン不要・無料。記録はこの練習の間だけ保存されます。</p>
       </section>
 
-      <section className="feature-grid" aria-label="このアプリの特徴">
+      <section className="feature-grid" aria-label="こんな人におすすめ">
         <article className="feature-card">
           <span>01</span>
-          <h2>工程ごとに採点します</h2>
-          <p>役・翻・符・支払いを別々に判定するので、どこで間違えたのかがひと目で分かります。</p>
+          <h2>リアル麻雀で申告したい</h2>
+          <p>卓を囲むときは自分で点数を数えて申告します。反復練習で、考えなくても口から出るレベルに。</p>
         </article>
         <article className="feature-card">
           <span>02</span>
-          <h2>満貫以上は実戦的に</h2>
-          <p>満貫以上では符の入力を省いて、点数の区分と支払いだけに集中できます。</p>
+          <h2>点数計算だけ自信がない</h2>
+          <p>ネット麻雀は打てるけど、計算はアプリ任せ……。工程ごとの採点で、苦手な工程がはっきりします。</p>
         </article>
         <article className="feature-card">
           <span>03</span>
-          <h2>今回の記録だけ残します</h2>
-          <p>ログインや長期保存はありません。終了すると、今回の練習結果だけを振り返れます。</p>
+          <h2>もっと麻雀に詳しくなりたい</h2>
+          <p>点数が分かると、押し引きや条件戦の理解も深まります。ガイドで仕組みから学べます。</p>
         </article>
       </section>
 
@@ -279,6 +284,7 @@ function PracticePage({
           melds={question.melds}
           riichi={question.context.riichi}
         />
+        <RotateHint />
 
         <div className="yaku-answer-block">
           <MultiAnswerGroup
@@ -368,6 +374,35 @@ function PracticePage({
         )}
       </section>
     </main>
+  )
+}
+
+const rotateHintStorageKey = 'mahjong-score-trainer-rotate-hint'
+
+// スマホ縦持ちのときだけ CSS で表示されるヒント。閉じたらセッション中は出さない。
+function RotateHint() {
+  const [dismissed, setDismissed] = useState(
+    () => window.sessionStorage.getItem(rotateHintStorageKey) === '1',
+  )
+
+  if (dismissed) {
+    return null
+  }
+
+  return (
+    <p className="rotate-hint">
+      <span>横持ちにすると牌が大きく表示されます</span>
+      <button
+        type="button"
+        aria-label="ヒントを閉じる"
+        onClick={() => {
+          window.sessionStorage.setItem(rotateHintStorageKey, '1')
+          setDismissed(true)
+        }}
+      >
+        ✕
+      </button>
+    </p>
   )
 }
 
@@ -670,21 +705,169 @@ function GuidePage() {
       </article>
 
       <article className="guide-section" id="fu">
-        <h2>符の数え方のポイント</h2>
-        <div className="reference-grid">
-          <InfoCard title="基本">
-            まず副底が20符、門前ロンはさらに10符です。ツモは原則2符ですが、平和ツモだけは20符に固定します。
+        <h2>符の数え方</h2>
+        <p>
+          符は「全員がもらえる基本の20符」に、手の形に応じたボーナスを足したものです。次の1〜5を足して、最後に1の位を切り上げます。
+        </p>
+        <ol className="fu-steps">
+          <li>
+            <strong>副底（基本）= 20符</strong> — どんな和了でも必ず20符からスタートします。
+          </li>
+          <li>
+            <strong>和了り方</strong> — 門前ロンは+10符。ツモは+2符（平和ツモを除く）。
+          </li>
+          <li>
+            <strong>雀頭（アタマ）</strong> — 役牌の対子なら+2符。
+          </li>
+          <li>
+            <strong>待ちの形</strong> — 単騎・嵌張・辺張は+2符。
+          </li>
+          <li>
+            <strong>面子</strong> — 刻子・槓子は+2〜32符。順子は0符。
+          </li>
+        </ol>
+
+        <div className="reference-grid reference-grid--fu">
+          <InfoCard title="雀頭（アタマ）の符" id="yakuhai">
+            <p>
+              雀頭が役牌（白・發・中、場風、自風）なら2符。数牌や役に絡まない風牌の雀頭は0符です。連風牌（場風かつ自風）も2符と数えます。
+            </p>
+            <ul className="fu-examples">
+              <li>
+                <TileStrip tiles={['7z', '7z']} />
+                <span>
+                  中の雀頭 → <strong>2符</strong>
+                </span>
+              </li>
+              <li>
+                <TileStrip tiles={['1z', '1z']} />
+                <span>
+                  東の雀頭（東場・東家のとき）→ <strong>2符</strong>
+                </span>
+              </li>
+              <li>
+                <TileStrip tiles={['8p', '8p']} />
+                <span>
+                  数牌の雀頭 → <strong>0符</strong>
+                </span>
+              </li>
+            </ul>
           </InfoCard>
-          <InfoCard title="待ち">
-            単騎・嵌張・辺張の待ちは2符です。両面待ちは0符になります。
-          </InfoCard>
-          <InfoCard title="雀頭">
-            役牌・場風・自風の雀頭は2符です。連風牌（場風かつ自風）の雀頭も2符として数えます。
-          </InfoCard>
-          <InfoCard title="七対子" id="chiitoi">
-            七対子は25符に固定します。副底や待ちの符は積みません。
+          <InfoCard title="待ちの形の符">
+            <p>
+              2種類の牌で待てる両面と、刻子になるシャンポンは0符。1種類しか待てない単騎・嵌張・辺張は2符です。
+            </p>
+            <ul className="fu-examples">
+              <li>
+                <TileStrip tiles={['5s', '6s']} winning="7s" />
+                <span>
+                  両面（4索・7索待ち）→ <strong>0符</strong>
+                </span>
+              </li>
+              <li>
+                <TileStrip tiles={['4m']} winning="4m" />
+                <span>
+                  単騎（雀頭の片割れ待ち）→ <strong>2符</strong>
+                </span>
+              </li>
+              <li>
+                <TileStrip tiles={['4p', '6p']} winning="5p" />
+                <span>
+                  嵌張（間の牌待ち）→ <strong>2符</strong>
+                </span>
+              </li>
+              <li>
+                <TileStrip tiles={['1s', '2s']} winning="3s" />
+                <span>
+                  辺張（3索だけ待ち）→ <strong>2符</strong>
+                </span>
+              </li>
+            </ul>
           </InfoCard>
         </div>
+
+        <h3 className="fu-subheading">面子の符</h3>
+        <p>
+          順子は0符。刻子と槓子は「鳴いたかどうか」と「中張牌か么九牌か」で決まります。ロンで完成した刻子は明刻として数えます。
+        </p>
+        <div className="score-table-wrap">
+          <table className="score-table score-table--fu">
+            <thead>
+              <tr>
+                <th>面子</th>
+                <th>中張牌（2〜8）</th>
+                <th>么九牌（1・9・字牌）</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>順子</th>
+                <td>0符</td>
+                <td>0符</td>
+              </tr>
+              <tr>
+                <th>明刻（ポン・ロン完成）</th>
+                <td>2符</td>
+                <td>4符</td>
+              </tr>
+              <tr>
+                <th>暗刻</th>
+                <td>4符</td>
+                <td>8符</td>
+              </tr>
+              <tr>
+                <th>明槓</th>
+                <td>8符</td>
+                <td>16符</td>
+              </tr>
+              <tr>
+                <th>暗槓</th>
+                <td>16符</td>
+                <td>32符</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ul className="fu-examples fu-examples--row">
+          <li>
+            <TileStrip tiles={['3m', '3m', '3m']} />
+            <span>
+              中張牌の暗刻 → <strong>4符</strong>
+            </span>
+          </li>
+          <li>
+            <TileStrip tiles={['5z', '5z', '5z']} />
+            <span>
+              白（么九牌）の暗刻 → <strong>8符</strong>
+            </span>
+          </li>
+        </ul>
+
+        <div className="reference-grid reference-grid--fu-exceptions">
+          <InfoCard title="平和ツモは20符" id="pinfu">
+            <p>平和をツモったときはツモの2符を数えず、20符に固定します。</p>
+          </InfoCard>
+          <InfoCard title="七対子は25符" id="chiitoi">
+            <p>七対子は常に25符。副底や待ちの符は積みません。</p>
+          </InfoCard>
+          <InfoCard title="喰い平和形は30符">
+            <p>鳴いて符が20符のままロンしたときは、最低の30符として数えます。</p>
+          </InfoCard>
+        </div>
+
+        <h3 className="fu-subheading">計算してみよう</h3>
+        <p>白のみ・門前ロンの手で、実際に符を数えてみます。</p>
+        <HandView tiles={FU_EXAMPLE_HAND} winningTile="6s" melds={[]} />
+        <BreakdownList
+          title="符の内訳"
+          items={[
+            { label: '副底', value: '20符' },
+            { label: '門前ロン', value: '+10符' },
+            { label: '白の暗刻（么九牌）', value: '+8符' },
+            { label: '雀頭（八筒）と両面待ちは0符', value: '+0符' },
+            { label: '合計 38符 → 1の位を切り上げ', value: '40符' },
+          ]}
+        />
       </article>
 
       <article className="guide-section" id="table">
@@ -771,15 +954,37 @@ function GuidePage() {
 type InfoCardProps = {
   title: string
   id?: string
-  children: string
+  children: ReactNode
 }
 
 function InfoCard({ title, id, children }: InfoCardProps) {
   return (
     <section className="info-card" id={id}>
       <h3>{title}</h3>
-      <p>{children}</p>
+      <div className="info-card__body">{children}</div>
     </section>
+  )
+}
+
+// ガイド用: 符計算の例に使う固定の手牌（白のみ・門前ロン・38→40符）。
+const FU_EXAMPLE_HAND: TileCode[] = [
+  '2m', '3m', '4m', '5m', '6m', '7m', '8p', '8p', '4s', '5s', '5z', '5z', '5z',
+]
+
+type TileStripProps = {
+  tiles: TileCode[]
+  winning?: TileCode
+}
+
+// ガイド内で牌の並びを小さくインライン表示する。
+function TileStrip({ tiles, winning }: TileStripProps) {
+  return (
+    <span className="tile-strip">
+      {tiles.map((tile, index) => (
+        <TileView key={`${tile}-${index}`} tile={tile} compact />
+      ))}
+      {winning && <TileView tile={winning} winning compact />}
+    </span>
   )
 }
 
