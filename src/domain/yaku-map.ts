@@ -19,6 +19,8 @@ export const yakuCatalog: Record<string, AnswerChoice> = {
   toitoi: { key: 'toitoi', label: '対々和' },
   sananko: { key: 'sananko', label: '三暗刻' },
   honroutou: { key: 'honroutou', label: '混老頭' },
+  shousangen: { key: 'shousangen', label: '小三元' },
+  'sanshoku-doukou': { key: 'sanshoku-doukou', label: '三色同刻' },
   chiitoitsu: { key: 'chiitoitsu', label: '七対子' },
   'yakuhai-haku': { key: 'yakuhai-haku', label: '白' },
   'yakuhai-hatsu': { key: 'yakuhai-hatsu', label: '發' },
@@ -46,6 +48,8 @@ const EXACT: Record<string, string> = {
   清一色: 'chinitsu',
   対々和: 'toitoi',
   三暗刻: 'sananko',
+  小三元: 'shousangen',
+  三色同刻: 'sanshoku-doukou',
   混老頭: 'honroutou',
   七対子: 'chiitoitsu',
 }

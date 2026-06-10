@@ -14,6 +14,13 @@ describe('mapYakuName', () => {
     expect(mapYakuName('赤ドラ')).toBeNull()
   })
 
+  it('maps 小三元 and 三色同刻', () => {
+    expect(mapYakuName('小三元')?.key).toBe('shousangen')
+    expect(mapYakuName('三色同刻')?.key).toBe('sanshoku-doukou')
+    expect(yakuCatalog['shousangen'].label).toBe('小三元')
+    expect(yakuCatalog['sanshoku-doukou'].label).toBe('三色同刻')
+  })
+
   it('every mapped key exists in the catalog', () => {
     for (const name of ['立直','平和','断幺九','混全帯幺九','清一色','二盃口','一気通貫']) {
       const m = mapYakuName(name)
