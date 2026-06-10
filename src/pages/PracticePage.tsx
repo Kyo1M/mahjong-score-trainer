@@ -52,11 +52,20 @@ export function PracticePage({
   // Enter: 未採点なら採点、採点後は次の問題へ。
   // 選択肢ボタンのトグルは Space に譲る（Enter は常に進行操作）。
   // 依存が毎レンダー変わるため、依存配列なしで毎回貼り直す。
+  // PracticePage は /practice でのみ単一マウントされる前提（App の key={question.id} 再マウント）。
+  // window への登録だが、同時に複数インスタンスは存在しないため競合しない。
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== 'Enter' || event.isComposing) return
       const el = document.activeElement
-      if (el instanceof HTMLSelectElement || el instanceof HTMLAnchorElement) return
+      if (
+        el instanceof HTMLSelectElement ||
+        el instanceof HTMLAnchorElement ||
+        el instanceof HTMLInputElement ||
+        el instanceof HTMLTextAreaElement
+      ) {
+        return
+      }
       event.preventDefault()
       if (evaluation) {
         onNext()
