@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DoraView, HandView } from '../components/TileView'
 import { AnswerGroup, MultiAnswerGroup } from '../components/AnswerGroup'
@@ -19,8 +19,6 @@ type PracticePageProps = {
   difficulty: DifficultyFilter
   onSetDifficulty: (d: DifficultyFilter) => void
   onAnswered: (evaluation: AnswerEvaluation, elapsedMs: number) => void
-  // Task 7 で sticky バーの「次の問題へ」に使う。現段階では未使用なので
-  // noUnusedParameters を避けるため分割代入では受け取らない。
   onNext: () => void
 }
 
@@ -30,17 +28,45 @@ export function PracticePage({
   difficulty,
   onSetDifficulty,
   onAnswered,
+  onNext,
 }: PracticePageProps) {
   const navigate = useNavigate()
   const [answer, setAnswer] = useState<UserAnswer>(emptyAnswer)
   const [evaluation, setEvaluation] = useState<AnswerEvaluation | null>(null)
   const [startedAt] = useState(() => performance.now())
   const [questionNumber] = useState(() => completedCount + 1)
+  const feedbackRef = useRef<HTMLDivElement>(null)
 
   // 問題ごとに再マウントされるので、新しい問題は画面の一番上から始める。
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
+
+  // 採点したら解説へスクロールする。
+  useEffect(() => {
+    if (evaluation) {
+      feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [evaluation])
+
+  // Enter: 未採点なら採点、採点後は次の問題へ。
+  // 選択肢ボタンのトグルは Space に譲る（Enter は常に進行操作）。
+  // 依存が毎レンダー変わるため、依存配列なしで毎回貼り直す。
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Enter' || event.isComposing) return
+      const el = document.activeElement
+      if (el instanceof HTMLSelectElement || el instanceof HTMLAnchorElement) return
+      event.preventDefault()
+      if (evaluation) {
+        onNext()
+      } else {
+        submitAnswer()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  })
 
   const canSubmit =
     answer.yakuKeys.length > 0 &&
@@ -169,7 +195,7 @@ export function PracticePage({
                 onClick={submitAnswer}
                 disabled={!canSubmit}
               >
-                採点する
+                採点する <kbd>Enter</kbd>
               </button>
               <button
                 className="button button--ghost"
@@ -190,9 +216,24 @@ export function PracticePage({
         </div>
 
         {evaluation && (
-          <FeedbackPanel question={question} evaluation={evaluation} />
+          <div ref={feedbackRef}>
+            <FeedbackPanel question={question} evaluation={evaluation} />
+          </div>
         )}
       </section>
+
+      {evaluation && (
+        <div className="sticky-bar" role="status">
+          <span className="sticky-bar__summary">
+            {evaluation.completeCorrect
+              ? 'すべて正解！'
+              : `正解: ${canonicalSummary(question)}`}
+          </span>
+          <button className="button button--primary" type="button" onClick={onNext}>
+            次の問題へ <kbd>Enter</kbd>
+          </button>
+        </div>
+      )}
     </main>
   )
 }
@@ -224,4 +265,10 @@ function toggleKey(keys: string[], key: string): string[] {
   return keys.includes(key)
     ? keys.filter((current) => current !== key)
     : [...keys, key]
+}
+
+function canonicalSummary(question: PracticeQuestion): string {
+  const c = question.canonicalInterpretation
+  const fuPart = question.fuRequired ? c.fuLabel : ''
+  return `${fuPart}${c.hanLabel} ${c.paymentLabel}`
 }

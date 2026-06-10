@@ -21,8 +21,8 @@ export function FeedbackPanel({ question, evaluation }: FeedbackPanelProps) {
       >
         <strong>{evaluation.completeCorrect ? 'すべて正解です！' : 'おしい！もう一度確認しましょう'}</strong>
         <span>
-          正しい答え: {yakuLabels(question, canonical.yakuKeys)} / {canonical.hanLabel}{' '}
-          / {canonical.fuLabel} / {canonical.paymentLabel}
+          正しい答え: {yakuLabels(question, canonical.yakuKeys)} / {canonical.fuLabel}{' '}
+          / {canonical.hanLabel} / {canonical.paymentLabel}
         </span>
       </div>
 

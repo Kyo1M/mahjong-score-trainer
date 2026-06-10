@@ -65,3 +65,43 @@ describe('PracticePage layout', () => {
     expect(screen.getByText('すべて正解です！')).toBeInTheDocument()
   })
 })
+
+describe('PracticePage grading flow', () => {
+  it('shows a sticky next bar after grading and advances on click', async () => {
+    const user = userEvent.setup()
+    const props = renderPage()
+    await answerCanonical(user)
+    await user.click(screen.getByRole('button', { name: /採点する/ }))
+
+    const next = screen.getByRole('button', { name: /次の問題へ/ })
+    expect(next.closest('.sticky-bar')).not.toBeNull()
+    await user.click(next)
+    expect(props.onNext).toHaveBeenCalledOnce()
+  })
+
+  it('scrolls to the feedback panel after grading', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const spy = vi.mocked(window.HTMLElement.prototype.scrollIntoView)
+    spy.mockClear()
+    await answerCanonical(user)
+    await user.click(screen.getByRole('button', { name: /採点する/ }))
+    expect(spy).toHaveBeenCalled()
+  })
+
+  it('Enter submits when answerable and advances after grading', async () => {
+    const user = userEvent.setup()
+    const props = renderPage()
+
+    // 未回答時の Enter は何もしない
+    await user.keyboard('{Enter}')
+    expect(props.onAnswered).not.toHaveBeenCalled()
+
+    await answerCanonical(user)
+    await user.keyboard('{Enter}') // 採点
+    expect(props.onAnswered).toHaveBeenCalledOnce()
+
+    await user.keyboard('{Enter}') // 次の問題へ
+    expect(props.onNext).toHaveBeenCalledOnce()
+  })
+})
