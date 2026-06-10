@@ -15,6 +15,9 @@ dist-ssr
 # Playwright MCP browser artifacts
 .playwright-mcp/
 
+# Superpowers brainstorm sessions (mockups)
+.superpowers/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
