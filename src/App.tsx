@@ -126,6 +126,11 @@ function App() {
             <small>麻雀の点数計算をやさしく練習</small>
           </span>
         </Link>
+        {stats.total > 0 && (
+          <span className="session-chip" aria-label="今回の成績">
+            {stats.total}問・正解{stats.completeCorrect}
+          </span>
+        )}
         <nav className="site-nav" aria-label="メインナビゲーション">
           <NavLink to="/practice">練習</NavLink>
           <NavLink to="/guide">ガイド</NavLink>
