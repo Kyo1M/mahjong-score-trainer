@@ -19,7 +19,7 @@ export type BuilderOptions = {
   riichiWeight?: number    // 門前時に立直する確率（既定 0.55）
   doraMax?: number         // ドラの最大枚数 0..2（既定 2）
   waitBias?: 'bad'         // 嵌張・辺張・単騎・シャンポンに寄せる（符ドリル用）
-  methodBias?: 'ron'       // ロン固定（符ドリル用: 門前ロン10符を狙う）
+  methodBias?: 'ron'       // ロン固定。門前ロンの10符を狙う符ドリルでは openMax:0 と併用すること
 }
 
 const HONORS: TileCode[] = ['1z', '2z', '3z', '4z', '5z', '6z', '7z']
@@ -202,7 +202,9 @@ export function buildRandomHand(rng: Rng, options: BuilderOptions = {}): ScoreIn
     if (!openIdx.has(i)) concealed.push(...blockTiles(b))
   })
   const winPos = concealed.indexOf(wait.winTile)
-  if (winPos < 0) return null // 形の都合で取り出せない（保険）
+  // 純粋に防御的（通常到達しない）: 待ちブロックは openable から除外されるため
+  // 和了牌は必ず concealed に残る。形の都合で取り出せない場合のみ null。
+  if (winPos < 0) return null
   const hand = [...concealed.slice(0, winPos), ...concealed.slice(winPos + 1)]
 
   // 5) 状況
