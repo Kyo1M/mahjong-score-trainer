@@ -18,6 +18,9 @@ dist-ssr
 # Superpowers brainstorm sessions (mockups)
 .superpowers/
 
+# Claude Code worktrees
+.claude/worktrees/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
