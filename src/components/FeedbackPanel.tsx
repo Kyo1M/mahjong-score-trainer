@@ -28,8 +28,8 @@ export function FeedbackPanel({ question, evaluation }: FeedbackPanelProps) {
 
       <div className="partial-grid">
         <ResultBadge label="役" correct={evaluation.yakuCorrect} />
-        <ResultBadge label="翻" correct={evaluation.hanCorrect} />
         <ResultBadge label="符" correct={evaluation.fuCorrect} />
+        <ResultBadge label="翻" correct={evaluation.hanCorrect} />
         <ResultBadge label="支払い" correct={evaluation.paymentCorrect} />
       </div>
 

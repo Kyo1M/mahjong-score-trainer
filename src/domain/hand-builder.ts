@@ -24,7 +24,7 @@ export type BuilderOptions = {
 
 const HONORS: TileCode[] = ['1z', '2z', '3z', '4z', '5z', '6z', '7z']
 
-export function blockTiles(block: Block): TileCode[] {
+function blockTiles(block: Block): TileCode[] {
   if (block.kind === 'run') {
     const { suit, start } = block
     return [`${start}${suit}`, `${start + 1}${suit}`, `${start + 2}${suit}`] as TileCode[]

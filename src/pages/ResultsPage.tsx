@@ -33,8 +33,8 @@ export function ResultsPage({ stats, onReset }: ResultsPageProps) {
             <div className="stats-grid">
               <Stat label="完全正解率" value={formatRate(stats.completeRate)} />
               <Stat label="役正答率" value={formatRate(stats.yakuRate)} />
-              <Stat label="翻正答率" value={formatRate(stats.hanRate)} />
               <Stat label="符正答率" value={formatRate(stats.fuRate)} />
+              <Stat label="翻正答率" value={formatRate(stats.hanRate)} />
               <Stat label="支払い正答率" value={formatRate(stats.paymentRate)} />
               <Stat label="最大連続正解" value={`${stats.bestStreak}問`} />
               <Stat label="平均回答時間" value={`${stats.averageSeconds}秒`} />
